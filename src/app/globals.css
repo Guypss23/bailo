@@ -1,0 +1,123 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+  --font-heading: var(--font-geist-sans), sans-serif;
+
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  --color-status-paye: var(--status-paye);
+  --color-status-paye-bg: var(--status-paye-bg);
+  --color-status-partiel: var(--status-partiel);
+  --color-status-partiel-bg: var(--status-partiel-bg);
+  --color-status-impaye: var(--status-impaye);
+  --color-status-impaye-bg: var(--status-impaye-bg);
+  --color-status-a-venir: var(--status-a-venir);
+  --color-status-a-venir-bg: var(--status-a-venir-bg);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+:root {
+  --background: #F7F8F6;
+  --foreground: #17201B;
+  --card: #FFFFFF;
+  --card-foreground: #17201B;
+  --popover: #FFFFFF;
+  --popover-foreground: #17201B;
+  --primary: #1F5C45;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EBEFEA;
+  --secondary-foreground: #17201B;
+  --muted: #EFF3EE;
+  --muted-foreground: #5E6B64;
+  --accent: #E8EFEA;
+  --accent-foreground: #1F5C45;
+  --destructive: #C2413A;
+  --destructive-foreground: #FFFFFF;
+  --border: #E2E7E3;
+  --input: #E2E7E3;
+  --ring: rgba(31, 92, 69, 0.4);
+  --radius: 10px;
+
+  --status-paye: #1E8A5A;
+  --status-paye-bg: #DDF1E6;
+  --status-partiel: #C98A0B;
+  --status-partiel-bg: #F8EBCB;
+  --status-impaye: #C2413A;
+  --status-impaye-bg: #F7DEDB;
+  --status-a-venir: #8E9A94;
+  --status-a-venir-bg: #E9EDEA;
+}
+
+.dark {
+  --background: #0E1412;
+  --foreground: #E7ECE9;
+  --card: #151D19;
+  --card-foreground: #E7ECE9;
+  --popover: #151D19;
+  --popover-foreground: #E7ECE9;
+  --primary: #6FCB9F;
+  --primary-foreground: #0E1412;
+  --secondary: #1F2A24;
+  --secondary-foreground: #E7ECE9;
+  --muted: #1A241F;
+  --muted-foreground: #94A39B;
+  --accent: #1D2B23;
+  --accent-foreground: #6FCB9F;
+  --destructive: #EC7068;
+  --destructive-foreground: #0E1412;
+  --border: #26312C;
+  --input: #26312C;
+  --ring: rgba(111, 203, 159, 0.4);
+
+  --status-paye: #4CC38A;
+  --status-paye-bg: #173426;
+  --status-partiel: #E3AA3B;
+  --status-partiel-bg: #3A2C10;
+  --status-impaye: #EC7068;
+  --status-impaye-bg: #3D1C1A;
+  --status-a-venir: #7D8A84;
+  --status-a-venir-bg: #1F2824;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}

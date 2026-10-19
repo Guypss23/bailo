@@ -1,0 +1,1500 @@
+<title>Bailo · Playbook vibe-coding</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout : bandeau d'ouverture avec la grille annuelle en exemple, puis sommaire collant + colonne de lecture ; les prompts sont des « fiches » copiables. */
+:root {
+  --paper: #F4F6F2;
+  --surface: #FFFFFF;
+  --ink: #16211C;
+  --muted: #5C6A62;
+  --line: #DCE3DD;
+  --accent: #1F5C45;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #E2EDE6;
+  --code-bg: #101814;
+  --code-ink: #DCE7E0;
+  --code-dim: #7F9389;
+  --ok: #1E8A5A;   --ok-soft: #DDF1E6;
+  --warn: #B87A06; --warn-soft: #F8EBCB;
+  --bad: #C2413A;  --bad-soft: #F7DEDB;
+  --idle: #8E9A94; --idle-soft: #E9EDEA;
+  --hatch: #E6EBE7;
+  --f-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0D1311; --surface: #141C18; --ink: #E5ECE8; --muted: #93A39A; --line: #26322C;
+    --accent: #6FCB9F; --accent-ink: #0D1311; --accent-soft: #1B2E25;
+    --code-bg: #090E0C; --code-ink: #D4E2DA; --code-dim: #6E8379;
+    --ok: #4CC38A; --ok-soft: #173426; --warn: #E3AA3B; --warn-soft: #3A2C10;
+    --bad: #EC7068; --bad-soft: #3D1C1A; --idle: #7D8A84; --idle-soft: #1F2824; --hatch: #1C2420;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0D1311; --surface: #141C18; --ink: #E5ECE8; --muted: #93A39A; --line: #26322C;
+  --accent: #6FCB9F; --accent-ink: #0D1311; --accent-soft: #1B2E25;
+  --code-bg: #090E0C; --code-ink: #D4E2DA; --code-dim: #6E8379;
+  --ok: #4CC38A; --ok-soft: #173426; --warn: #E3AA3B; --warn-soft: #3A2C10;
+  --bad: #EC7068; --bad-soft: #3D1C1A; --idle: #7D8A84; --idle-soft: #1F2824; --hatch: #1C2420;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; animation: none !important; } }
+body {
+  background: var(--paper); color: var(--ink);
+  font-family: var(--f-body); font-size: 16px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; letter-spacing: -0.02em; margin: 0; }
+p { margin: 0; }
+code { font-family: var(--f-mono); font-size: 0.86em; background: var(--accent-soft); padding: 0.1em 0.35em; border-radius: 4px; }
+.num { font-variant-numeric: tabular-nums; }
+.wrap {
+  max-width: 1200px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* ---------- Ouverture ---------- */
+.opening { border-bottom: 1px solid var(--line); background: var(--surface); }
+.opening .wrap { padding-block: 56px 48px; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 48px; align-items: center; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.opening h1 { font-size: clamp(44px, 7vw, 76px); font-weight: 800; line-height: 0.95; margin-top: 14px; }
+.opening h1 span { color: var(--accent); }
+.lead { font-size: 19px; color: var(--muted); margin-top: 18px; max-width: 34em; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.fact { font-size: 13px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); }
+.fact b { font-weight: 600; }
+.cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+.btn {
+  font: 500 14px/1 var(--f-body); border-radius: 8px; padding: 11px 16px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink); text-decoration: none;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.08); }
+
+/* Grille annuelle d'exemple */
+.preview { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 18px; min-width: 0; }
+.preview-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.preview-head strong { font-family: var(--f-display); font-size: 18px; }
+.tag-example { font-family: var(--f-mono); font-size: 11px; color: var(--muted); border: 1px dashed var(--line); padding: 2px 7px; border-radius: 4px; }
+.yr { display: grid; grid-template-columns: minmax(96px, 1.3fr) repeat(12, minmax(0, 1fr)); gap: 4px; align-items: center; }
+.yr .mh { font-family: var(--f-mono); font-size: 10px; color: var(--muted); text-align: center; }
+.yr .mh.now { color: var(--accent); font-weight: 600; }
+.yr .who { font-size: 12.5px; line-height: 1.25; min-width: 0; }
+.yr .who b { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.yr .who span { color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.cell { aspect-ratio: 1; border-radius: 5px; max-width: 100%; position: relative; }
+.cell.paye { background: var(--ok); }
+.cell.partiel { background: linear-gradient(to top, var(--warn) 55%, var(--warn-soft) 55%); }
+.cell.impaye { background: var(--bad); }
+.cell.a_venir { background: var(--idle-soft); border: 1px solid var(--line); }
+.cell.vide { background: repeating-linear-gradient(135deg, var(--hatch) 0 3px, transparent 3px 6px); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 14px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.preview-foot { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.preview-foot div { font-size: 11.5px; color: var(--muted); }
+.preview-foot b { display: block; font-family: var(--f-display); font-size: 20px; color: var(--ink); font-weight: 700; }
+
+/* ---------- Corps ---------- */
+.body .wrap { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 56px; padding-block: 48px 96px; }
+.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; font-size: 14px; }
+.toc p { font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.toc ol { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; }
+.toc a { display: block; padding: 5px 10px; border-radius: 6px; color: var(--ink); text-decoration: none; border-left: 2px solid transparent; }
+.toc a:hover { background: var(--accent-soft); }
+.toc a.on { border-left-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.progress { margin-top: 20px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.progress .bar { height: 6px; background: var(--idle-soft); border-radius: 99px; overflow: hidden; margin-top: 8px; }
+.progress .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+.progress small { color: var(--muted); font-size: 12.5px; }
+
+main { min-width: 0; display: grid; gap: 72px; }
+section { display: grid; gap: 20px; min-width: 0; scroll-margin-top: 24px; }
+section > header { display: grid; gap: 8px; }
+section h2 { font-size: clamp(28px, 3.4vw, 36px); font-weight: 700; line-height: 1.1; }
+.intro { color: var(--muted); max-width: 40em; font-size: 17px; }
+h3 { font-size: 19px; font-weight: 700; }
+.prose { display: grid; gap: 12px; max-width: 46em; }
+.prose ul, .prose ol { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.panel h3 { font-size: 17px; }
+.panel ul { margin: 0; padding-left: 1.1em; display: grid; gap: 5px; font-size: 15px; }
+.phase { font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; justify-self: start; }
+.phase.mvp { background: var(--ok-soft); color: var(--ok); }
+.phase.v1 { background: var(--warn-soft); color: var(--warn); }
+.phase.v2 { background: var(--idle-soft); color: var(--muted); }
+.phase.launch { background: var(--accent-soft); color: var(--accent); }
+
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); background: var(--paper); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td code { white-space: nowrap; }
+.pick { color: var(--ok); font-weight: 600; }
+.nope { color: var(--bad); font-weight: 600; }
+
+.status-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.st { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: center; padding: 12px 14px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); font-size: 14px; }
+.st i { width: 12px; height: 12px; border-radius: 3px; }
+.st b { font-weight: 600; }
+.st small { grid-column: 2; color: var(--muted); font-size: 13px; line-height: 1.4; }
+
+pre.tree, pre.mermaid { margin: 0; }
+pre.tree { font-family: var(--f-mono); font-size: 13px; line-height: 1.55; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; overflow-x: auto; color: var(--ink); }
+pre.tree .c { color: var(--muted); }
+.mermaid-box { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; overflow-x: auto; }
+
+.rules { counter-reset: r; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; list-style: none; padding: 0; margin: 0; }
+.rules li { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; font-size: 15px; display: grid; gap: 4px; }
+.rules li b { font-weight: 600; }
+
+/* ---------- Fiches prompts ---------- */
+.prompts { display: grid; gap: 22px; }
+.prompt { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; min-width: 0; scroll-margin-top: 24px; }
+.prompt.done { border-color: var(--ok); }
+.p-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: start; padding: 18px 20px 14px; }
+.p-num { font-family: var(--f-display); font-weight: 800; font-size: 26px; line-height: 1; color: var(--accent); min-width: 2.2ch; }
+.p-title { display: grid; gap: 6px; min-width: 0; }
+.p-title h3 { font-size: 20px; }
+.p-title p { color: var(--muted); font-size: 14.5px; }
+.p-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.where { font-size: 12.5px; color: var(--muted); }
+.p-tools { display: flex; gap: 8px; align-items: center; }
+.copy { font: 500 13px/1 var(--f-body); padding: 9px 12px; border-radius: 7px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); cursor: pointer; white-space: nowrap; }
+.copy:hover { border-color: var(--accent); color: var(--accent); }
+.copy.ok { background: var(--ok-soft); color: var(--ok); border-color: var(--ok); }
+pre.code {
+  margin: 0; background: var(--code-bg); color: var(--code-ink);
+  font: 12.8px/1.62 var(--f-mono); padding: 18px 20px; white-space: pre-wrap; word-break: break-word;
+  max-height: 460px; overflow: auto; tab-size: 2;
+}
+.p-check { padding: 14px 20px 16px; border-top: 1px solid var(--line); display: grid; gap: 8px; font-size: 14px; }
+.p-check strong { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; }
+.p-check ul { margin: 0; padding-left: 1.1em; display: grid; gap: 3px; }
+.p-check label { display: inline-flex; gap: 8px; align-items: center; font-weight: 500; cursor: pointer; margin-top: 4px; }
+.p-check input { width: 16px; height: 16px; accent-color: var(--ok); }
+
+.phase-divider { display: flex; align-items: center; gap: 12px; font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-top: 10px; }
+.phase-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 8px; font-size: 14px; }
+
+@media (max-width: 960px) {
+  .opening .wrap { grid-template-columns: minmax(0, 1fr); gap: 32px; padding-block: 36px 32px; }
+  .body .wrap { grid-template-columns: minmax(0, 1fr); gap: 0; padding-block: 32px 72px; }
+  .toc { display: none; }
+  main { gap: 56px; }
+}
+@media (max-width: 560px) {
+  .p-head { grid-template-columns: auto minmax(0, 1fr); }
+  .p-tools { grid-column: 1 / -1; }
+  .lead { font-size: 17px; }
+  pre.code { font-size: 12px; padding: 14px; }
+  .yr { grid-template-columns: minmax(72px, 1fr) repeat(12, minmax(0, 1fr)); gap: 3px; }
+}
+</style>
+
+<!-- ================= OUVERTURE ================= -->
+<div class="opening">
+  <div class="wrap">
+    <div>
+      <div class="eyebrow">Playbook vibe-coding · Next.js · 100 % local</div>
+      <h1>Bailo<span>.</span></h1>
+      <p class="lead">L'application qui montre au propriétaire, mois par mois et année par année, quel locataire a payé, lequel est en retard et combien il a encaissé. Voici le produit, l'architecture, le modèle de données et les 16 prompts à donner dans l'ordre. Tout tourne sur ton ordinateur : la base de données sera branchée plus tard.</p>
+      <div class="facts">
+        <span class="fact"><b>16</b> prompts séquencés</span>
+        <span class="fact"><b>6</b> prompts de dépannage</span>
+        <span class="fact">Aucune base ni service externe</span>
+        <span class="fact">MVP en 3 à 5 jours</span>
+      </div>
+      <div class="cta-row">
+        <a class="btn primary" href="#prompts">Aller aux prompts</a>
+        <button class="btn" id="copy-all" type="button">Copier les 16 prompts</button>
+      </div>
+    </div>
+
+    <div class="preview" aria-label="Exemple de la vue Suivi annuel">
+      <div class="preview-head">
+        <strong>Suivi annuel 2026</strong>
+        <span class="tag-example">écran cible · données d'exemple</span>
+      </div>
+      <div class="yr" id="yr"></div>
+      <div class="legend">
+        <span><i style="background:var(--ok)"></i>Payé</span>
+        <span><i style="background:var(--warn)"></i>Partiel</span>
+        <span><i style="background:var(--bad)"></i>Impayé</span>
+        <span><i style="background:var(--idle-soft);border:1px solid var(--line)"></i>À venir</span>
+        <span><i style="background:repeating-linear-gradient(135deg,var(--hatch) 0 2px,transparent 2px 4px);border:1px solid var(--line)"></i>Hors bail</span>
+      </div>
+      <div class="preview-foot">
+        <div><b class="num">28 940 €</b>encaissés en 2026</div>
+        <div><b class="num">94,6 %</b>taux de recouvrement</div>
+        <div><b class="num">1 650 €</b>reste à percevoir</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= CORPS ================= -->
+<div class="body">
+  <div class="wrap">
+    <nav class="toc" aria-label="Sommaire">
+      <p>Sommaire</p>
+      <ol>
+        <li><a href="#produit">Le produit</a></li>
+        <li><a href="#outil">Choisir l'outil</a></li>
+        <li><a href="#stack">Stack et architecture</a></li>
+        <li><a href="#donnees">Modèle de données</a></li>
+        <li><a href="#ecrans">Écrans</a></li>
+        <li><a href="#methode">Méthode</a></li>
+        <li><a href="#prompts">Les 16 prompts</a></li>
+        <li><a href="#depannage">Dépannage</a></li>
+        <li><a href="#suite">Plus tard</a></li>
+      </ol>
+      <div class="progress">
+        <small id="prog-label">0 / 16 étapes validées</small>
+        <div class="bar"><i id="prog-bar"></i></div>
+      </div>
+    </nav>
+
+    <main>
+      <!-- ========== PRODUIT ========== -->
+      <section id="produit">
+        <header>
+          <span class="eyebrow">Le produit</span>
+          <h2>Une seule promesse : savoir qui a payé, en dix secondes</h2>
+          <p class="intro">Bailo vise le propriétaire bailleur particulier qui gère de 1 à 30 logements, seul ou en SCI familiale, et qui suit aujourd'hui ses loyers dans un tableur. Tout le produit tourne autour de quatre objets : le bien, le locataire, le bail, et l'échéance mensuelle que le bail génère.</p>
+        </header>
+        <div class="cols">
+          <div class="panel">
+            <span class="phase mvp">MVP · prompts 0 à 9</span>
+            <h3>Suivre les loyers</h3>
+            <ul>
+              <li>Données et comptes en local</li>
+              <li>Biens, locataires, baux</li>
+              <li>Échéances mensuelles générées automatiquement</li>
+              <li>Encaissements complets ou partiels</li>
+              <li>Vue « Loyers du mois »</li>
+              <li>Grille « Suivi annuel » sur 12 mois</li>
+              <li>Tableau de bord et indicateurs</li>
+            </ul>
+          </div>
+          <div class="panel">
+            <span class="phase v1">V1 · prompts 10 à 13</span>
+            <h3>Gagner du temps</h3>
+            <ul>
+              <li>Profil bailleur et signature</li>
+              <li>Quittances et reçus PDF conformes</li>
+              <li>Exports CSV et Excel pour la déclaration</li>
+              <li>Avis d'échéance et relances, avec boîte d'envoi simulée</li>
+              <li>Tâches automatiques du jour</li>
+            </ul>
+          </div>
+          <div class="panel">
+            <span class="phase launch">Finition · prompts 14 et 15</span>
+            <h3>Présenter et fiabiliser</h3>
+            <ul>
+              <li>Landing page qui convertit</li>
+              <li>Tests, accessibilité, isolation des comptes</li>
+              <li>README pour relancer le projet</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== OUTIL ========== -->
+      <section id="outil">
+        <header>
+          <span class="eyebrow">Choisir l'outil</span>
+          <h2>Un outil qui travaille sur ton ordinateur</h2>
+          <p class="intro">Les données vivent dans un fichier du projet. Il faut donc un outil qui lance l'application en local, pas seulement un aperçu dans le navigateur.</p>
+        </header>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Outil</th><th>Où tourne l'app</th><th>Verdict</th></tr></thead>
+            <tbody>
+              <tr><td><b>Claude Code</b>, <b>Cursor</b>, Windsurf</td><td>Sur ton ordinateur</td><td><span class="pick">Recommandé.</span> Ouvre le dossier Bailo, mets le prompt 0 dans <code>CLAUDE.md</code>, <code>.cursor/rules/bailo.mdc</code> ou <code>.windsurfrules</code>.</td></tr>
+              <tr><td><b>v0</b>, <b>Bolt.new</b></td><td>Aperçu dans le navigateur</td><td>Possible, mais les données de l'aperçu peuvent être effacées entre deux sessions. Télécharge le projet pour le lancer chez toi.</td></tr>
+              <tr><td><b>Lovable</b></td><td>Navigateur</td><td><span class="nope">Non.</span> Il génère du React + Vite, pas du Next.js.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="prose">
+          <p><b>À préparer avant le prompt 1 :</b> <a href="https://nodejs.org">Node.js</a> version 20 ou plus récente, et ton outil de vibe-coding ouvert sur le dossier Bailo. Rien d'autre : pas de compte en ligne, pas de base de données.</p>
+          <p><b>Pour lancer l'app à tout moment :</b> <code>npm run dev</code>, puis ouvrir <code>http://localhost:3000</code>.</p>
+        </div>
+      </section>
+
+      <!-- ========== STACK ========== -->
+      <section id="stack">
+        <header>
+          <span class="eyebrow">Stack et architecture</span>
+          <h2>Local aujourd'hui, prêt pour une vraie base demain</h2>
+          <p class="intro">Toutes les données passent par une seule couche d'accès. Pour l'instant elle lit et écrit un fichier JSON. Le jour où tu brancheras la base, seule cette couche changera : les écrans resteront identiques.</p>
+        </header>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Couche</th><th>Choix</th><th>Pourquoi</th></tr></thead>
+            <tbody>
+              <tr><td>Framework</td><td>Next.js App Router, TypeScript strict</td><td>Server Components pour lire, Server Actions pour écrire</td></tr>
+              <tr><td>UI</td><td>Tailwind CSS, shadcn/ui, lucide-react</td><td>Composants accessibles que l'IA maîtrise</td></tr>
+              <tr><td>Données (provisoire)</td><td>Fichier <code>.data/bailo.json</code> derrière <code>src/lib/data</code></td><td>Aucune installation ; remplaçable sans toucher aux pages</td></tr>
+              <tr><td>Comptes (provisoire)</td><td>Session locale signée, mots de passe hachés</td><td>Fonctionne hors ligne ; isolé dans <code>src/lib/auth</code></td></tr>
+              <tr><td>Règles métier</td><td>Fonctions pures dans <code>src/lib/domain</code></td><td>Statuts et échéances testés, indépendants du stockage</td></tr>
+              <tr><td>Formulaires</td><td>react-hook-form + Zod</td><td>Même validation côté client et serveur</td></tr>
+              <tr><td>Tableaux, graphiques</td><td>TanStack Table, Recharts</td><td>Tri, filtres, graphiques mensuels</td></tr>
+              <tr><td>Documents</td><td>@react-pdf/renderer, ExcelJS</td><td>Quittances PDF, exports Excel</td></tr>
+              <tr><td>E-mails (provisoire)</td><td>React Email + boîte d'envoi simulée</td><td>Tu vois chaque e-mail sans rien envoyer</td></tr>
+              <tr><td>Tests</td><td>Vitest, Playwright</td><td>Règles métier et parcours complet</td></tr>
+            </tbody>
+          </table>
+        </div>
+<pre class="tree" aria-label="Arborescence du projet">src/
+├─ app/
+│  ├─ (marketing)/page.tsx          <span class="c"># landing page</span>
+│  ├─ (auth)/connexion · inscription · actions.ts
+│  ├─ (app)/layout.tsx              <span class="c"># sidebar + garde d'authentification</span>
+│  │  ├─ tableau-de-bord/
+│  │  ├─ loyers/                    <span class="c"># loyers du mois</span>
+│  │  │  └─ annuel/                 <span class="c"># grille 12 mois</span>
+│  │  ├─ biens/ · locataires/ · baux/   <span class="c"># + [id]/ et actions.ts</span>
+│  │  └─ parametres/                <span class="c"># dont boite-envoi/</span>
+│  └─ api/
+│     ├─ documents/[dueId]/route.ts <span class="c"># quittance ou reçu PDF</span>
+│     ├─ files/[...path]/route.ts   <span class="c"># fichiers privés (signature, PDF)</span>
+│     └─ exports/[type]/route.ts    <span class="c"># CSV, XLSX</span>
+├─ components/ui/                   <span class="c"># shadcn</span>
+├─ components/app/                  <span class="c"># StatusBadge, Money, EmptyState, PaymentSheet…</span>
+├─ emails/                          <span class="c"># modèles React Email</span>
+├─ lib/
+│  ├─ data/                         <span class="c"># SEULE porte d'accès aux données</span>
+│  │  ├─ types.ts · index.ts
+│  │  └─ local/store.ts             <span class="c"># lit et écrit .data/bailo.json</span>
+│  ├─ domain/                       <span class="c"># règles métier pures + tests</span>
+│  ├─ auth/                         <span class="c"># session locale</span>
+│  ├─ email/send.ts                 <span class="c"># envoi simulé → boîte d'envoi</span>
+│  ├─ validations/ · queries/ · pdf/
+│  └─ format.ts                     <span class="c"># argent, dates, périodes</span>
+└─ middleware.ts                    <span class="c"># proxy.ts selon la version de Next.js</span>
+.data/                              <span class="c"># bailo.json + files/ (hors du code)</span></pre>
+      </section>
+
+      <!-- ========== DONNÉES ========== -->
+      <section id="donnees">
+        <header>
+          <span class="eyebrow">Modèle de données</span>
+          <h2>Un bail génère une échéance par mois, les paiements la soldent</h2>
+          <p class="intro">C'est la décision la plus importante du projet. On n'enregistre jamais un statut « payé » : on enregistre ce qui est dû et ce qui a été reçu, et une fonction calcule le statut. Les paiements partiels, les retards et les corrections restent ainsi toujours justes.</p>
+        </header>
+        <div class="mermaid-box">
+<pre class="mermaid">
+erDiagram
+  USERS ||--|| PROFILES : "a un"
+  USERS ||--o{ PROPERTIES : possede
+  USERS ||--o{ TENANTS : gere
+  PROPERTIES ||--o{ LEASES : "est loue via"
+  TENANTS ||--o{ LEASES : signe
+  LEASES ||--o{ RENT_DUES : "genere chaque mois"
+  RENT_DUES ||--o{ PAYMENTS : "est reglee par"
+  RENT_DUES ||--o{ DOCUMENTS : "quittance ou recu"
+  RENT_DUES ||--o{ OUTBOX : "avis et relances"
+</pre>
+        </div>
+        <div class="status-row">
+          <div class="st"><i style="background:var(--ok)"></i><b>Payé</b><small>Total reçu supérieur ou égal au montant dû.</small></div>
+          <div class="st"><i style="background:var(--warn)"></i><b>Partiel</b><small>Une partie reçue, il reste un solde.</small></div>
+          <div class="st"><i style="background:var(--bad)"></i><b>Impayé</b><small>Rien reçu et date d'échéance dépassée.</small></div>
+          <div class="st"><i style="background:var(--idle)"></i><b>À venir</b><small>Rien reçu, échéance pas encore atteinte.</small></div>
+        </div>
+        <div class="prose">
+          <ul>
+            <li><b>Période</b> : un mois est toujours enregistré comme le 1er du mois (<code>2026-03-01</code>). Tri, filtres et regroupements par année deviennent simples.</li>
+            <li><b>Montants figés</b> : chaque échéance copie le loyer et les charges du bail au moment de sa création. Une hausse de loyer ne réécrit pas l'historique.</li>
+            <li><b>Calculs en centimes</b> : toutes les additions d'argent se font en nombres entiers de centimes, pour éviter les erreurs d'arrondi de JavaScript.</li>
+            <li><b>Isolation des comptes</b> : chaque enregistrement porte un <code>owner_id</code>, et la couche de données ne renvoie que ceux de l'utilisateur connecté.</li>
+            <li><b>Noms prêts pour la base</b> : les champs sont nommés comme des colonnes de base de données (<code>rent_amount</code>, <code>due_date</code>). Le branchement futur se fera sans renommage.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ========== ÉCRANS ========== -->
+      <section id="ecrans">
+        <header>
+          <span class="eyebrow">Écrans</span>
+          <h2>Neuf écrans, dont deux qui font tout le produit</h2>
+          <p class="intro">« Loyers du mois » sert au quotidien : encaisser en un clic. « Suivi annuel » remplace le tableur : c'est la grille colorée en haut de cette page.</p>
+        </header>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Route</th><th>Rôle</th><th>Prompt</th></tr></thead>
+            <tbody>
+              <tr><td><code>/</code></td><td>Landing page marketing</td><td>14</td></tr>
+              <tr><td><code>/connexion</code>, <code>/inscription</code></td><td>Compte local, e-mail et mot de passe</td><td>3</td></tr>
+              <tr><td><code>/tableau-de-bord</code></td><td>Encaissé du mois, impayés, 12 derniers mois, à relancer</td><td>9</td></tr>
+              <tr><td><code>/loyers?mois=2026-10</code></td><td>Échéances du mois, encaissement rapide, sélection multiple</td><td>7</td></tr>
+              <tr><td><code>/loyers/annuel?annee=2026</code></td><td>Grille baux × 12 mois, totaux, exports</td><td>8, 12</td></tr>
+              <tr><td><code>/biens</code>, <code>/biens/[id]</code></td><td>Logements, bail en cours, historique</td><td>4</td></tr>
+              <tr><td><code>/locataires</code>, <code>/locataires/[id]</code></td><td>Coordonnées, solde, ponctualité</td><td>5</td></tr>
+              <tr><td><code>/baux</code>, <code>/baux/nouveau</code>, <code>/baux/[id]</code></td><td>Assistant de création, échéancier, documents</td><td>6, 11</td></tr>
+              <tr><td><code>/parametres</code></td><td>Profil bailleur, signature, devise, boîte d'envoi, compte</td><td>10, 13</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ========== MÉTHODE ========== -->
+      <section id="methode">
+        <header>
+          <span class="eyebrow">Méthode</span>
+          <h2>Sept règles pour que l'IA ne parte pas dans le décor</h2>
+        </header>
+        <ol class="rules">
+          <li><b>Le prompt 0 va dans les instructions du projet.</b>Pas dans le chat. Il doit être relu à chaque demande.</li>
+          <li><b>Un prompt à la fois, dans l'ordre.</b>Chaque étape s'appuie sur la précédente. N'en fusionne pas deux.</li>
+          <li><b>Teste avant de continuer.</b>Chaque fiche a sa liste « À vérifier ». Tout doit passer avant l'étape suivante.</li>
+          <li><b>Sauvegarde après chaque étape validée.</b>Point de sauvegarde de ton outil ou copie du dossier. Revenir en arrière vaut mieux qu'empiler des correctifs.</li>
+          <li><b>Erreur = message exact + contexte.</b>Colle l'erreur complète, ce que tu faisais et ce que tu attendais. Les prompts de dépannage sont faits pour ça.</li>
+          <li><b>Toujours passer par la couche de données.</b>Si l'IA lit le fichier JSON depuis une page ou propose d'installer une base, refuse. C'est ce qui rendra le branchement futur facile.</li>
+          <li><b>Remplace les [crochets].</b>Certains prompts contiennent des valeurs à adapter. Les montants et noms d'exemple peuvent rester.</li>
+        </ol>
+      </section>
+
+      <!-- ========== PROMPTS ========== -->
+      <section id="prompts">
+        <header>
+          <span class="eyebrow">Les 16 prompts</span>
+          <h2>À coller dans l'ordre, un par un</h2>
+          <p class="intro">Coche « Étape validée » quand la liste de vérification passe. Ta progression est gardée dans ce navigateur.</p>
+        </header>
+
+        <div class="prompts">
+
+<div class="phase-divider">Fondations</div>
+
+<article class="prompt" id="p0">
+  <div class="p-head">
+    <span class="p-num">0</span>
+    <div class="p-title">
+      <h3>Contexte maître du projet</h3>
+      <p>La « constitution » du projet : produit, stack, modèle de données, règles de code, design.</p>
+      <div class="p-meta"><span class="phase mvp">MVP</span><span class="where">À coller dans les instructions du projet : <code>CLAUDE.md</code>, <code>.cursor/rules/bailo.mdc</code> ou <code>.windsurfrules</code></span></div>
+    </div>
+    <div class="p-tools"><button class="copy" data-copy="c0" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="c0"># Projet : Bailo, suivi des loyers pour propriétaires bailleurs
+
+## Mission
+Bailo permet à un propriétaire bailleur particulier (1 à 30 logements) de savoir en 10 secondes qui a payé, qui est en retard et combien il a encaissé, pour chaque mois et chaque année. Bailo remplace son tableur Excel.
+
+## Utilisateur
+Propriétaire non technique, 35 à 65 ans, gère seul ou en SCI familiale. Saisit sur ordinateur, consulte sur mobile. Interface 100 % en français. Devise configurable (EUR par défaut ; XOF, XAF, MAD, CHF, CAD possibles).
+
+## Fonctionnement 100 % local
+- L'application tourne uniquement en local (npm run dev). Aucun service externe, aucun compte en ligne, aucun déploiement.
+- Il n'y a PAS de base de données pour l'instant. Les données sont enregistrées dans le fichier .data/bailo.json et les fichiers dans .data/files/, via la couche src/lib/data.
+- Une base de données sera branchée plus tard. Pour que ce soit facile :
+  · les pages, composants et Server Actions n'accèdent JAMAIS au fichier directement, uniquement via les fonctions exportées par src/lib/data ;
+  · toutes ces fonctions sont async ;
+  · les comptes passent uniquement par src/lib/auth ; l'envoi d'e-mails uniquement par src/lib/email/send.ts.
+- N'installe aucune base de données, aucun ORM et aucun SDK de service (Prisma, SQLite, Supabase, Firebase…) sans me le demander.
+
+## Stack imposée (ne jamais dévier sans me demander)
+- Next.js App Router (dernière version stable), TypeScript strict, dossier src/, alias @/*
+- Tailwind CSS + shadcn/ui, icônes lucide-react, toasts sonner, thème next-themes
+- Écritures : Server Actions validées avec Zod. Formulaires : react-hook-form + @hookform/resolvers/zod.
+- Tableaux : TanStack Table. Graphiques : Recharts. Dates : date-fns avec la locale fr.
+- PDF : @react-pdf/renderer. Excel : ExcelJS. Modèles d'e-mails : React Email.
+- Tests : Vitest (unitaires), Playwright (parcours).
+
+## Modèle de données (noms de champs à respecter exactement, en snake_case)
+- users : id, email, password_hash, created_at
+- profiles : id (= id de l'utilisateur), full_name, company_name, address, city, phone, currency ('EUR'), reminder_days_after_due (5), created_at
+- properties : id, owner_id, name, type ('appartement' | 'maison' | 'studio' | 'chambre' | 'local_commercial' | 'parking' | 'autre'), address_line1, address_line2, postal_code, city, country ('FR'), surface_m2, notes, archived_at, created_at
+- tenants : id, owner_id, first_name, last_name, email, phone, notes, archived_at, created_at
+- leases : id, owner_id, property_id, tenant_id, status ('brouillon' | 'actif' | 'termine'), start_date, end_date (ou null), rent_amount, charges_amount, deposit_amount, due_day (1 à 28), payment_method ('virement' | 'prelevement' | 'especes' | 'cheque' | 'mobile_money' | 'carte' | 'autre'), notes, created_at
+- rent_dues : id, owner_id, lease_id, period ('YYYY-MM-01'), due_date, rent_amount, charges_amount, total_amount, note, created_at. Un seul rent_due par couple (lease_id, period).
+- payments : id, owner_id, rent_due_id, paid_at, amount (strictement positif), method, reference, note, created_at
+Identifiants : UUID. Horodatages : ISO 8601. Dates métier : chaînes 'YYYY-MM-DD'.
+
+## Règles de code
+- Server Components par défaut. "use client" seulement pour l'interactivité, au plus bas possible dans l'arbre.
+- Chaque Server Action et chaque route API commence par récupérer l'utilisateur connecté (requireUser) et ne manipule que ses données (owner_id).
+- Montants : nombres à 2 décimales. Tous les calculs d'argent se font en centimes entiers (helpers toCents / fromCents). Affichage via formatMoney(amount, currency) (Intl.NumberFormat 'fr-FR'), avec chiffres tabulaires.
+- Périodes : un mois = la date du 1er du mois ('2026-03-01'). Jamais "03/2026" dans les données.
+- Dates : ne jamais faire new Date('2026-03-01') sans précaution (décalage de fuseau). Utiliser des helpers dédiés dans src/lib/format.ts.
+- Après chaque mutation : revalidatePath des pages concernées + toast de confirmation.
+- Chaque liste a un état vide (icône, phrase, bouton d'action), un état de chargement (Skeleton de la même forme) et un état d'erreur.
+- Accessibilité : label sur chaque champ, focus visible, contraste AA, navigation clavier complète.
+- Code et noms de fichiers en anglais ; textes d'interface, URL et messages en français.
+
+## Vocabulaire métier
+- Bien : un logement loué. Locataire : la personne qui paie.
+- Bail : relie un bien et un locataire ; loyer hors charges, provision sur charges, dépôt de garantie, jour d'échéance, dates de début et de fin.
+- Échéance : ce qui est dû pour un bail pour un mois donné. Générée automatiquement.
+- Paiement : argent reçu, rattaché à une échéance. Une échéance peut avoir plusieurs paiements partiels.
+- Quittance : délivrée uniquement quand l'échéance est intégralement payée. Paiement partiel : on délivre un « reçu ».
+
+## Statuts d'échéance (calculés, jamais enregistrés)
+- paye : total payé supérieur ou égal au dû. Vert.
+- partiel : payé entre 0 et le dû. Ambre.
+- impaye : rien payé et date d'échéance dépassée. Rouge.
+- a_venir : rien payé, échéance non atteinte. Gris.
+
+## Design
+- Interface sobre, dense et calme, dans l'esprit de Linear, Mercury et Stripe Dashboard. Pas de dégradés, pas d'emoji, pas d'ombres lourdes.
+- Police Geist Sans (next/font), chiffres tabulaires sur tous les montants.
+- Couleur principale vert bouteille #1F5C45 (clair) / #6FCB9F (sombre). Fond #F7F8F6 / #0E1412. Bordures #E2E7E3 / #26312C.
+- Statuts : paye #1E8A5A, partiel #C98A0B, impaye #C2413A, a_venir #8E9A94, chacun avec une variante de fond doux.
+- Rayon 10px. Mode sombre complet. Mobile d'abord pour la consultation, desktop pour la saisie.
+
+## Façon de travailler
+- Avant de coder une étape, liste en 5 lignes max ce que tu vas créer ou modifier.
+- Après chaque étape, liste les fichiers touchés et ce que je dois tester.
+- Si une consigne est ambiguë ou contredit ce contexte, demande-moi au lieu de supposer.</pre>
+  <div class="p-check">
+    <strong>À vérifier</strong>
+    <ul><li>Le texte est enregistré dans les instructions persistantes du projet, pas seulement envoyé dans le chat.</li></ul>
+    <label><input type="checkbox" data-step="0"> Étape validée</label>
+  </div>
+</article>
+
+<article class="prompt" id="p1">
+  <div class="p-head">
+    <span class="p-num">1</span>
+    <div class="p-title">
+      <h3>Initialisation, design system et coquille</h3>
+      <p>Le projet, les couleurs, la navigation et les composants de base. Aucune donnée.</p>
+      <div class="p-meta"><span class="phase mvp">MVP</span></div>
+    </div>
+    <div class="p-tools"><button class="copy" data-copy="c1" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="c1">Lis le contexte du projet Bailo et respecte-le strictement.
+
+Étape 1 : initialise le projet dans le dossier courant et construis la coquille de l'application. Aucune donnée dans cette étape.
+
+1. Projet
+- Next.js App Router + TypeScript strict, dossier src/, alias @/*.
+- Installe et configure : tailwindcss, shadcn/ui (couleur de base neutral), lucide-react, next-themes, sonner, date-fns, zod, react-hook-form, @hookform/resolvers.
+- Composants shadcn : button, input, label, textarea, select, dialog, sheet, dropdown-menu, table, badge, card, tabs, tooltip, skeleton, separator, avatar, popover, calendar, form, checkbox, progress, alert-dialog, command, toggle-group.
+
+2. Design system (variables CSS shadcn dans globals.css)
+- Police Geist Sans + Geist Mono via next/font. Classe utilitaire .num = font-variant-numeric: tabular-nums.
+- Clair : fond #F7F8F6, surface #FFFFFF, texte #17201B, secondaire #5E6B64, bordures #E2E7E3, primaire #1F5C45 (texte blanc), ring primaire à 40 %.
+- Sombre : fond #0E1412, surface #151D19, texte #E7ECE9, secondaire #94A39B, bordures #26312C, primaire #6FCB9F (texte #0E1412).
+- Tokens de statut (texte + fond doux, clair et sombre) : --status-paye #1E8A5A, --status-partiel #C98A0B, --status-impaye #C2413A, --status-a-venir #8E9A94, exposés dans Tailwind.
+- Rayon 10px. Ombres légères uniquement sur menus, sheets, dialogs.
+- next-themes (attribut class), choix Clair / Sombre / Système dans le menu utilisateur.
+
+3. Routes (pages placeholder avec PageHeader)
+- src/app/(marketing)/page.tsx : landing temporaire avec bouton « Se connecter »
+- src/app/(auth)/connexion/page.tsx et src/app/(auth)/inscription/page.tsx
+- src/app/(app)/layout.tsx : layout connecté
+- src/app/(app)/ : tableau-de-bord, loyers, loyers/annuel, biens, biens/[id], locataires, locataires/[id], baux, baux/nouveau, baux/[id], parametres
+
+4. Layout connecté
+- Desktop (1024px et plus) : sidebar fixe de 248px. En haut, logo texte « Bailo ». Navigation : Tableau de bord, Loyers du mois, Suivi annuel, Biens, Locataires, Baux ; séparateur ; Paramètres. En bas : menu utilisateur (avatar à initiales, nom, e-mail, thème, déconnexion). Élément actif : fond primaire à 8 %, texte primaire, filet de 2px à gauche.
+- Tablette (768 à 1023px) : sidebar réduite à 64px, icônes seules avec tooltips.
+- Mobile (moins de 768px) : barre de navigation fixe en bas, 5 entrées (Accueil, Loyers, Annuel, Baux, Plus), avec padding safe-area-inset-bottom. « Plus » ouvre un Sheet avec le reste.
+- Composant PageHeader : titre 24px semi-bold, description optionnelle, actions à droite ; passe en colonne sur mobile.
+- Contenu : max-width 1280px, padding 24px (16px sur mobile).
+
+5. Utilitaires et composants
+- src/lib/format.ts : formatMoney(amount, currency = 'EUR'), formatPeriod('2026-03-01') → « mars 2026 », formatMonthShort → « mars », formatDate('2026-03-12') → « 12 mars 2026 », toPeriod(dateStr) → « YYYY-MM-01 », addMonthsToPeriod, todayISO(). Ces helpers manipulent des chaînes 'YYYY-MM-DD' sans décalage de fuseau.
+- src/components/app/status-badge.tsx : StatusBadge({ status }) pour paye / partiel / impaye / a_venir (pastille + libellé « Payé », « Partiel », « Impayé », « À venir »).
+- src/components/app/money.tsx : montant formaté avec .num.
+- src/components/app/empty-state.tsx : icône, titre, description, bouton.
+- Ajoute Vitest (script npm run test) et un premier test de src/lib/format.ts.
+
+Termine en listant les fichiers créés, la commande pour lancer l'app et ce que je dois vérifier.</pre>
+  <div class="p-check">
+    <strong>À vérifier</strong>
+    <ul>
+      <li><code>npm run dev</code> puis <code>http://localhost:3000</code> : toutes les routes s'affichent, la navigation marque la page active.</li>
+      <li>Fenêtre réduite à 375px : barre du bas visible, aucun défilement horizontal.</li>
+      <li>Le mode sombre est lisible partout. <code>npm run test</code> passe.</li>
+    </ul>
+    <label><input type="checkbox" data-step="1"> Étape validée</label>
+  </div>
+</article>
+
+<article class="prompt" id="p2">
+  <div class="p-head">
+    <span class="p-num">2</span>
+    <div class="p-title">
+      <h3>Couche de données locale et règles métier</h3>
+      <p>Le stockage dans un fichier, la seule porte d'accès aux données, et le calcul des statuts et des échéances.</p>
+      <div class="p-meta"><span class="phase mvp">MVP</span></div>
+    </div>
+    <div class="p-tools"><button class="copy" data-copy="c2" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="c2">Étape 2 : la couche de données locale et les règles métier. N'installe aucune base de données ni aucun ORM.
+
+1. Types (src/lib/data/types.ts)
+- Un type par entité du modèle de données du contexte projet, avec exactement les noms de champs indiqués. Types union pour les valeurs fixes (type de bien, statut de bail, mode de paiement).
+- DueStatus = 'paye' | 'partiel' | 'impaye' | 'a_venir'.
+- RentDueOverview = RentDue + property_id, tenant_id, paid_amount, balance, last_paid_at, status, days_late.
+- Variantes d'entrée sans id ni owner_id ni created_at (NewProperty, NewTenant, etc.).
+
+2. Stockage (src/lib/data/local/store.ts), avec import "server-only"
+- Fichier .data/bailo.json de la forme { users: [], profiles: [], properties: [], tenants: [], leases: [], rent_dues: [], payments: [] }, créé automatiquement s'il n'existe pas.
+- Lecture et écriture avec node:fs/promises. Écriture atomique (fichier temporaire puis rename) et file d'attente qui sérialise les écritures pour éviter qu'elles s'écrasent.
+- Identifiants crypto.randomUUID(), created_at en ISO.
+- Ajoute .data/ aux fichiers ignorés du projet.
+
+3. Fonctions d'accès, un fichier par domaine dans src/lib/data/ : profiles.ts, properties.ts, tenants.ts, leases.ts, rent-dues.ts, payments.ts
+- Chaque fonction est async, reçoit ownerId en premier paramètre et ne lit ou n'écrit que les enregistrements de cet utilisateur. Un enregistrement d'un autre utilisateur se comporte comme introuvable (null).
+- Contrôles d'intégrité faits ici, avec des erreurs typées (src/lib/data/errors.ts) :
+  · un bail ne référence qu'un bien et un locataire du même propriétaire ; un paiement qu'une échéance du même propriétaire (NotFoundError) ;
+  · deux baux non brouillons ne se chevauchent pas sur le même bien, une date de fin vide valant « sans fin » (LeaseOverlapError) ;
+  · un seul rent_due par (lease_id, period) ;
+  · un bien ou un locataire qui a des baux ne peut pas être supprimé (HasLeasesError) ;
+  · supprimer une échéance supprime ses paiements ; supprimer un bail supprime ses échéances et paiements.
+- src/lib/data/index.ts réexporte tout. C'est le seul module que le reste de l'application a le droit d'importer.
+
+4. Règles métier pures (src/lib/domain/), sans aucun accès aux données, testées avec Vitest
+- money.ts : toCents, fromCents, sumMoney. Tous les calculs en centimes entiers.
+- rent-status.ts : getDueOverview(due, payments, today) → paid_amount, balance, last_paid_at, status, days_late :
+  · payé supérieur ou égal au dû → paye ;
+  · payé supérieur à 0 → partiel ;
+  · rien payé et due_date antérieure à today → impaye ;
+  · sinon a_venir ;
+  · days_late = nombre de jours depuis due_date si le solde est positif et la date dépassée, sinon 0.
+- rent-dues.ts : computeMissingDues(lease, existingPeriods, until) → échéances à créer : une par mois, du mois de start_date jusqu'au plus petit entre end_date et until (par défaut le mois suivant le mois courant) ; due_date = période + (due_day − 1) jours ; montants copiés du bail ; total_amount = loyer + charges ; rien pour un bail brouillon.
+- Tests : bail démarrant le 15, bail terminé, février en année bissextile, paiement partiel, paiement le jour même de l'échéance, arrondis (0,1 + 0,2), période déjà existante non dupliquée.
+
+5. Lectures agrégées (src/lib/data/rent-dues.ts)
+- listDueOverviews(ownerId, { period?, year?, leaseId?, tenantId? }) : combine échéances, paiements et baux avec getDueOverview.
+- generateRentDues(ownerId, until?) : applique computeMissingDues à tous les baux non brouillons de l'utilisateur, enregistre et renvoie le nombre d'échéances créées.
+
+6. Contrôle
+- Page temporaire /dev/sante qui affiche le chemin du fichier de données et le nombre d'enregistrements par collection. Je la supprimerai à l'étape 15.</pre>
+  <div class="p-check">
+    <strong>À vérifier</strong>
+    <ul>
+      <li><code>/dev/sante</code> s'affiche et le fichier <code>.data/bailo.json</code> a été créé.</li>
+      <li><code>npm run test</code> passe, avec des tests sur les statuts et la génération des échéances.</li>
+      <li>Aucun fichier de <code>src/app</code> n'importe <code>src/lib/data/local</code> directement.</li>
+    </ul>
+    <label><input type="checkbox" data-step="2"> Étape validée</label>
+  </div>
+</article>
+
+<article class="prompt" id="p3">
+  <div class="p-head">
+    <span class="p-num">3</span>
+    <div class="p-title">
+      <h3>Comptes locaux</h3>
+      <p>Inscription et connexion par e-mail et mot de passe, protection des pages, sans service externe.</p>
+      <div class="p-meta"><span class="phase mvp">MVP</span></div>
+    </div>
+    <div class="p-tools"><button class="copy" data-copy="c3" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="c3">Étape 3 : comptes et sessions en local. Tout passe par src/lib/auth, qui sera remplacé plus tard sans toucher au reste de l'app.
+
+Logique (src/lib/auth/)
+- password.ts : hashPassword / verifyPassword avec scrypt de node:crypto (sel aléatoire, comparaison avec timingSafeEqual).
+- session.ts : session dans un cookie httpOnly, sameSite lax, signé en HMAC SHA-256 avec AUTH_SECRET lu dans .env.local, valable 30 jours. Crée .env.example avec AUTH_SECRET et indique-moi la commande pour générer une valeur.
+- index.ts : getCurrentUser() (vérifie le cookie, renvoie l'utilisateur et son profil, ou null), requireUser() (redirige vers /connexion si absent), signUp, signIn, signOut.
+- Les utilisateurs et profils sont enregistrés via src/lib/data (collections users et profiles).
+- Limite simple des tentatives de connexion : 5 par minute et par e-mail, en mémoire.
+
+Pages (groupe (auth))
+- /connexion et /inscription : carte centrée de 400px, logo Bailo, phrase d'accroche courte, fond uni avec un motif discret.
+- Inscription : prénom et nom (enregistrés dans profiles.full_name), e-mail, mot de passe (8 caractères minimum, indicateur de force). Crée le compte et le profil, ouvre la session, redirige vers /tableau-de-bord.
+- Connexion : e-mail + mot de passe. Un seul message d'échec, « E-mail ou mot de passe incorrect », qui ne révèle pas si le compte existe.
+- Pas de mot de passe oublié ni de lien de connexion par e-mail pour l'instant.
+- Server Actions dans src/app/(auth)/actions.ts, validation Zod, messages en français.
+
+Protection
+- middleware.ts (ou proxy.ts si la version de Next.js l'exige) : sans cookie de session, les pages de (app) redirigent vers /connexion?next=[chemin] ; avec un cookie, /connexion et /inscription redirigent vers /tableau-de-bord.
+- Le layout (app) fait la vérification complète avec requireUser().
+- Menu utilisateur : nom depuis le profil, bouton de déconnexion.</pre>
+  <div class="p-check">
+    <strong>À vérifier</strong>
+    <ul>
+      <li>Inscription → arrivée sur le tableau de bord, ton nom dans le menu utilisateur.</li>
+      <li>Dans <code>.data/bailo.json</code>, le mot de passe n'apparaît pas en clair.</li>
+      <li>Après déconnexion, <code>/loyers</code> renvoie vers <code>/connexion</code>.</li>
+    </ul>
+    <label><input type="checkbox" data-step="3"> Étape validée</label>
+  </div>
+</article>
+
+<div class="phase-divider">Données de base</div>
+
+<article class="prompt" id="p4">
+  <div class="p-head">
+    <span class="p-num">4</span>
+    <div class="p-title">
+      <h3>Biens</h3>
+      <p>Liste, fiche et formulaire des logements. Ce prompt fixe les patterns réutilisés ensuite.</p>
+      <div class="p-meta"><span class="phase mvp">MVP</span></div>
+    </div>
+    <div class="p-tools"><button class="copy" data-copy="c4" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="c4">Étape 4 : gestion des biens. Soigne cette étape : ses patterns (formulaire, actions, états vides) serviront de modèle aux suivantes.
+
+Page /biens
+- PageHeader « Biens » + bouton « Ajouter un bien ».
+- Grille de cartes (3 colonnes desktop, 2 tablette, 1 mobile). Carte : nom, icône du type, adresse sur deux lignes ; en pied de carte : locataire actuel ou badge « Vacant », loyer charges comprises du bail actif, StatusBadge du mois en cours (affiche « — » tant qu'il n'y a pas d'échéance).
+- Recherche (nom, ville) et filtre Tous / Occupés / Vacants / Archivés.
+- État vide : « Ajoutez votre premier bien » + bouton.
+
+Formulaire partagé création / édition
+- Dialog sur desktop, Sheet plein écran sur mobile.
+- Champs : nom (placeholder « T2 rue des Lilas »), type, adresse ligne 1, ligne 2, code postal, ville, pays (FR par défaut), surface en m², notes.
+- Schéma Zod src/lib/validations/property.ts. Server Actions createProperty, updateProperty, archiveProperty, deleteProperty dans src/app/(app)/biens/actions.ts. Chaque action appelle requireUser(), passe par src/lib/data et retourne { ok, error, fieldErrors }.
+- Si la couche de données lève HasLeasesError, propose l'archivage à la place de la suppression. Suppression toujours confirmée par un AlertDialog.
+
+Page /biens/[id]
+- En-tête : nom, adresse, actions Modifier et Archiver.
+- Bloc « Bail en cours » (locataire, loyer, charges, début) ou bouton « Créer un bail » vers /baux/nouveau?bien=[id].
+- Historique des baux (tableau).
+- Emplacement réservé « 12 derniers mois » (rempli à l'étape 8).
+- notFound() si le bien n'existe pas pour cet utilisateur.</pre>
+  <div class="p-check">
+    <strong>À vérifier</strong>
+    <ul>
+      <li>Créer, modifier, archiver, supprimer un bien ; un toast confirme chaque action.</li>
+      <li>Les erreurs de champ s'affichent sous les champs, en français.</li>
+      <li>Crée un second compte : le bien du premier est invisible, même en tapant son adresse <code>/biens/[id]</code>.</li>
+    </ul>
+    <label><input type="checkbox" data-step="4"> Étape validée</label>
+  </div>
+</article>
+
+<article class="prompt" id="p5">
+  <div class="p-head">
+    <span class="p-num">5</span>
+    <div class="p-title">
+      <h3>Locataires</h3>
+      <p>Tableau, fiche avec solde et ponctualité.</p>
+      <div class="p-meta"><span class="phase mvp">MVP</span></div>
+    </div>
+    <div class="p-tools"><button class="copy" data-copy="c5" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="c5">Étape 5 : gestion des locataires. Mêmes patterns et même niveau de finition que les biens.
+
+Page /locataires
+- Tableau TanStack : nom complet (avatar à initiales), e-mail, téléphone, bien loué actuellement, solde dû (somme des balances positives renvoyées par listDueOverviews), statut du mois en cours.
+- Tri par nom et par solde, recherche, filtre « Avec impayés ».
+- Mobile : liste de cartes.
+
+Formulaire : prénom, nom, e-mail, téléphone (format international accepté), notes. Server Actions createTenant, updateTenant, archiveTenant, deleteTenant (HasLeasesError → proposer l'archivage).
+
+Page /locataires/[id]
+- Coordonnées avec boutons « Copier ».
+- 4 indicateurs : total payé depuis le début, solde dû actuel, nombre de retards sur 12 mois, délai moyen de paiement (jours entre due_date et le dernier paiement de chaque échéance soldée).
+- Historique mois par mois : période, dû, payé, reste, date de paiement, statut.
+- Baux associés.
+- Calculs des indicateurs en fonctions pures dans src/lib/domain/tenant-stats.ts, testées avec Vitest.</pre>
+  <div class="p-check">
+    <strong>À vérifier</strong>
+    <ul>
+      <li>Création, modification, archivage d'un locataire.</li>
+      <li>La fiche s'affiche sans erreur même sans bail ni échéance (indicateurs à 0).</li>
+    </ul>
+    <label><input type="checkbox" data-step="5"> Étape validée</label>
+  </div>
+</article>
+
+<article class="prompt" id="p6">
+  <div class="p-head">
+    <span class="p-num">6</span>
+    <div class="p-title">
+      <h3>Baux et génération des échéances</h3>
+      <p>L'assistant de création de bail, l'échéancier, et un jeu de données de démo pour tester la suite.</p>
+      <div class="p-meta"><span class="phase mvp">MVP</span></div>
+    </div>
+    <div class="p-tools"><button class="copy" data-copy="c6" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="c6">Étape 6 : les baux et la génération automatique des échéances.
+
+Création /baux/nouveau : assistant en 3 étapes avec indicateur de progression
+1. Bien : combobox avec recherche parmi les biens non archivés, ou création à la volée. Prérempli si ?bien=[id].
+2. Locataire : combobox ou création à la volée. Prérempli si ?locataire=[id].
+3. Conditions : date de début, date de fin optionnelle (« Sans date de fin » coché par défaut), loyer hors charges, provision sur charges, dépôt de garantie, jour d'échéance (1 à 28, défaut 1), mode de paiement habituel, notes.
+   Récapitulatif à droite (en dessous sur mobile) : total mensuel charges comprises, premier mois dû, nombre d'échéances qui seront créées jusqu'au mois prochain (calculé avec computeMissingDues).
+- Zod : montants positifs, fin postérieure au début.
+- Si la couche de données lève LeaseOverlapError : « Ce bien a déjà un bail actif sur cette période. »
+- Après création : appelle generateRentDues(user.id), puis redirige vers /baux/[id] avec le toast « Bail créé · [n] échéances générées ».
+
+Génération continue
+- src/lib/rent-dues.ts : ensureRentDues(userId) appelle generateRentDues. Enveloppe-la avec cache() de React et appelle-la dans le layout (app), pour que le mois courant et le suivant existent toujours.
+
+Page /baux : tableau avec onglets Actifs / Terminés / Brouillons : locataire, bien, loyer charges comprises, début, fin, statut du mois.
+
+Page /baux/[id]
+- Résumé des conditions. Actions : Modifier, Terminer le bail (AlertDialog demandant la date de fin, puis statut termine), Supprimer (uniquement s'il n'y a aucun paiement).
+- Échéancier : toutes les échéances (listDueOverviews avec leaseId) groupées par année, avec statut, dû, payé, reste.
+- Modification du loyer ou des charges : demande « Appliquer à partir de [mois] » et ne met à jour que les échéances de ce mois et des suivants qui n'ont encore aucun paiement. Les échéances passées ne changent jamais.
+
+Données de démonstration
+- Dans /parametres, section « Données de démo », visible seulement si l'utilisateur n'a aucun bien.
+- Bouton « Charger des données de démo » : crée 3 biens, 3 locataires et 3 baux démarrant le 1er janvier de l'année précédente (loyers 650 €, 820 € et 1 150 € ; charges entre 40 et 90 €), appelle generateRentDues, puis crée des paiements réalistes : la plupart à l'heure, quelques retards de 3 à 20 jours, un paiement partiel, et le mois dernier impayé pour un des locataires. Marque toutes ces données avec notes = '[demo]'.
+- Bouton « Supprimer les données de démo » qui supprime uniquement les données marquées '[demo]' et ce qui en dépend.</pre>
+  <div class="p-check">
+    <strong>À vérifier</strong>
+    <ul>
+      <li>Un bail démarré le 1er janvier crée une échéance par mois jusqu'au mois prochain inclus.</li>
+      <li>Un 2ᵉ bail actif sur le même bien et la même période affiche le message d'erreur prévu.</li>
+      <li>Les données de démo se chargent et se suppriment proprement.</li>
+    </ul>
+    <label><input type="checkbox" data-step="6"> Étape validée</label>
+  </div>
+</article>
+
+<div class="phase-divider">Le cœur du produit</div>
+
+<article class="prompt" id="p7">
+  <div class="p-head">
+    <span class="p-num">7</span>
+    <div class="p-title">
+      <h3>Loyers du mois</h3>
+      <p>L'écran du quotidien : voir le mois, encaisser en un clic, traiter plusieurs loyers d'un coup.</p>
+      <div class="p-meta"><span class="phase mvp">MVP</span></div>
+    </div>
+    <div class="p-tools"><button class="copy" data-copy="c7" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="c7">Étape 7 : l'écran « Loyers du mois » (/loyers). C'est l'écran le plus utilisé : il doit être rapide, lisible, et faire gagner du temps.
+
+URL : /loyers?mois=2026-10 (mois courant par défaut) et ?statut=impaye en option. Données : listDueOverviews(user.id, { period }) enrichie des locataires et des biens, en un seul appel côté serveur.
+
+En-tête
+- Sélecteur de mois : flèches précédent / suivant, libellé « octobre 2026 » cliquable qui ouvre un sélecteur mois + année, bouton « Ce mois-ci ».
+- 4 indicateurs : Attendu, Encaissé, Reste à percevoir, Taux de recouvrement (avec barre de progression).
+
+Filtres
+- Onglets avec compteurs : Tous · Impayés · Partiels · Payés · À venir. Recherche par locataire ou bien. L'onglet actif se reflète dans l'URL.
+
+Tableau (desktop)
+- Colonnes : case à cocher, Locataire (avatar + nom ; bien en gris en dessous), Échéance (date ; « en retard de [n] j » en rouge si days_late est positif), Dû, Payé, Reste, Statut, Actions.
+- Tri par défaut : impayés et partiels d'abord (retard décroissant), puis à venir, puis payés.
+- Action principale : bouton « Encaisser » si reste positif. Menu ⋯ : Encaissement partiel, Voir les paiements, Télécharger la quittance (si payé), Envoyer une relance (si impayé). Les deux dernières sont désactivées avec le tooltip « Disponible bientôt ».
+- Sélection multiple : barre d'action flottante en bas « Marquer [n] loyers comme payés », qui crée pour chacun un paiement du montant restant, daté du jour, avec le mode du bail. AlertDialog de confirmation avec le total.
+
+Mobile : cartes empilées (nom, bien, reste à payer en grand, badge, bouton « Encaisser » pleine largeur).
+
+Composant PaymentSheet (src/components/app/payment-sheet.tsx, réutilisé à l'étape 8)
+- Sheet à droite sur desktop, en bas sur mobile.
+- Récap : locataire, bien, période, dû, déjà payé, reste.
+- Champs : montant (prérempli avec le reste ; raccourcis « Montant total » / « Autre montant »), date de paiement (aujourd'hui), mode (celui du bail), référence, note.
+- Si le montant dépasse le reste : message « Ce paiement dépasse le montant dû de [x] » et blocage.
+- Server Action recordPayment (Zod) → ajout du paiement via src/lib/data → revalidatePath('/loyers'), ('/loyers/annuel'), ('/tableau-de-bord') et la fiche du bail → toast « Paiement de 870,00 € enregistré » avec bouton « Annuler » (5 secondes) qui supprime ce paiement.
+- Liste des paiements déjà enregistrés pour l'échéance, chacun modifiable ou supprimable.
+
+Ajoute loading.tsx avec un Skeleton qui a la forme du tableau.</pre>
+  <div class="p-check">
+    <strong>À vérifier</strong>
+    <ul>
+      <li>Avec les données de démo : encaisser un loyer complet, puis un partiel, puis annuler un paiement.</li>
+      <li>Les indicateurs et les badges se mettent à jour sans recharger la page.</li>
+      <li>La sélection multiple crée le bon nombre de paiements.</li>
+    </ul>
+    <label><input type="checkbox" data-step="7"> Étape validée</label>
+  </div>
+</article>
+
+<article class="prompt" id="p8">
+  <div class="p-head">
+    <span class="p-num">8</span>
+    <div class="p-title">
+      <h3>Suivi annuel</h3>
+      <p>La grille baux × 12 mois qui remplace le tableur.</p>
+      <div class="p-meta"><span class="phase mvp">MVP</span></div>
+    </div>
+    <div class="p-tools"><button class="copy" data-copy="c8" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="c8">Étape 8 : la vue « Suivi annuel » (/loyers/annuel?annee=2026), une grille façon tableur, en beaucoup plus lisible.
+
+Données : listDueOverviews(user.id, { year }) plus baux, locataires et biens. Le pivot bail × mois se fait côté serveur dans src/lib/domain/annual-grid.ts (fonction pure, testée avec Vitest).
+
+En-tête
+- Sélecteur d'année (flèches), bascule « Montants / Statuts », filtre par bien.
+- Résumé : encaissé sur l'année, attendu, taux de recouvrement, nombre d'échéances impayées, retard moyen en jours.
+
+Grille (desktop et tablette)
+- Lignes : un bail par ligne (locataire en gras, bien en gris). Colonnes : Janv. à Déc., puis Total payé et Reste dû.
+- Première colonne et ligne d'en-tête collantes. La grille défile horizontalement dans son propre conteneur, jamais la page.
+- Cellule = une échéance : fond doux de la couleur du statut, montant payé (mode Montants) ou icône (mode Statuts), fine barre de progression en bas pour les partiels. Mois hors bail : cellule hachurée neutre. Colonne du mois courant légèrement surlignée.
+- Survol ou focus : tooltip avec dû, payé, date(s) de paiement, retard. Clic : ouvre le PaymentSheet de l'étape 7.
+- Ligne de pied : par mois, encaissé / attendu et taux en mini-barre.
+- Légende des statuts sous la grille.
+
+Mobile
+- Remplace la grille par une liste de baux ; chaque bail affiche 12 pastilles colorées (J F M A M J J A S O N D) et son total. Toucher une pastille ouvre le PaymentSheet.
+
+Accessibilité
+- Vrai élément table avec th scope="col" et scope="row". Chaque cellule a un aria-label du type « Martin Dupont, mars 2026, payé, 870 € ».
+- La couleur n'est jamais la seule information : icône ou texte en plus.
+
+Remplis aussi l'emplacement « 12 derniers mois » de /biens/[id] avec une rangée de pastilles.</pre>
+  <div class="p-check">
+    <strong>À vérifier</strong>
+    <ul>
+      <li>Les totaux de la grille correspondent à ceux de « Loyers du mois » pour un même mois.</li>
+      <li>Encaisser depuis une cellule met la grille à jour.</li>
+      <li>À 375px, la vue pastilles s'affiche et la page ne défile pas horizontalement.</li>
+    </ul>
+    <label><input type="checkbox" data-step="8"> Étape validée</label>
+  </div>
+</article>
+
+<article class="prompt" id="p9">
+  <div class="p-head">
+    <span class="p-num">9</span>
+    <div class="p-title">
+      <h3>Tableau de bord</h3>
+      <p>La première page après connexion : la situation du mois, ce qui demande une action, la tendance.</p>
+      <div class="p-meta"><span class="phase mvp">MVP</span></div>
+    </div>
+    <div class="p-tools"><button class="copy" data-copy="c9" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="c9">Étape 9 : le tableau de bord (/tableau-de-bord).
+
+- « Bonjour [prénom] » et la date du jour.
+- Si l'utilisateur n'a encore aucun bail : checklist d'onboarding en 4 étapes, cochées automatiquement (Ajouter un bien, Ajouter un locataire, Créer un bail, Enregistrer un premier paiement) + lien vers les données de démo. Rien d'autre.
+
+Sinon :
+- 4 cartes indicateurs
+  · Encaissé ce mois, sur l'attendu, avec barre de progression
+  · Impayés en cours : montant total et nombre de locataires concernés (rouge si supérieur à 0)
+  · Taux d'occupation : biens avec bail actif / biens non archivés
+  · Encaissé depuis le 1er janvier, avec variation en % par rapport à la même période l'an dernier
+- Graphique Recharts « 12 derniers mois » : barres groupées Attendu (gris) et Encaissé (couleur primaire), axe Y en montants abrégés (« 1,2 k€ »), tooltip détaillé, couleurs lues depuis les variables CSS pour fonctionner en mode sombre. Encaissé = paiements dont paid_at tombe dans le mois.
+- Carte « À relancer » : échéances impayées ou partielles triées par retard, bouton Encaisser sur chaque ligne ; 6 lignes max + lien « Tout voir » vers /loyers?statut=impaye.
+- Carte « Prochaines échéances » : les 7 prochains jours.
+- Carte « Baux à surveiller » : fin de bail dans les 90 jours.
+
+Toutes les lectures dans src/lib/queries/dashboard.ts, qui n'utilise que src/lib/data et lance les appels en parallèle avec Promise.all. Calculs (taux de recouvrement, variation annuelle, regroupement par mois) en fonctions pures dans src/lib/domain/, testées avec Vitest. Ajoute un loading.tsx fidèle à la mise en page.</pre>
+  <div class="p-check">
+    <strong>À vérifier</strong>
+    <ul>
+      <li>Un compte neuf voit la checklist ; un compte avec données de démo voit les indicateurs.</li>
+      <li>Le graphique est lisible en mode sombre. Les tests passent.</li>
+      <li><b>Fin du MVP</b> : fais une sauvegarde et utilise l'app quelques jours avec tes vrais loyers.</li>
+    </ul>
+    <label><input type="checkbox" data-step="9"> Étape validée</label>
+  </div>
+</article>
+
+<div class="phase-divider">V1 · gagner du temps</div>
+
+<article class="prompt" id="p10">
+  <div class="p-head">
+    <span class="p-num">10</span>
+    <div class="p-title">
+      <h3>Paramètres et profil bailleur</h3>
+      <p>Les informations qui apparaîtront sur les quittances, la signature, les fichiers privés.</p>
+      <div class="p-meta"><span class="phase v1">V1</span></div>
+    </div>
+    <div class="p-tools"><button class="copy" data-copy="c10" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="c10">Étape 10 : paramètres (/parametres), nécessaires aux quittances.
+
+Fichiers privés (local)
+- src/lib/data/files.ts : saveFile(ownerId, relativePath, buffer), readFile(ownerId, relativePath), deleteFile. Les fichiers sont rangés dans .data/files/[owner_id]/… ; un chemin qui sort de ce dossier (« .. ») est refusé.
+- Route src/app/api/files/[...path]/route.ts : renvoie un fichier uniquement s'il appartient à l'utilisateur connecté, sinon 404.
+- Ajoute au profil le champ signature_path.
+
+Page /parametres (onglets verticaux sur desktop, liste sur mobile)
+- Profil bailleur : nom complet ou raison sociale (SCI), adresse postale, ville, téléphone. Aperçu en direct de l'en-tête de quittance à côté du formulaire.
+- Signature : import d'une image PNG ou JPEG (1 Mo max) ou dessin au doigt / à la souris (react-signature-canvas). Enregistrée sous [owner_id]/signature.png ; chemin dans profiles.signature_path ; aperçu via /api/files.
+- Préférences : devise (EUR, XOF, XAF, MAD, CHF, CAD) utilisée partout par formatMoney ; délai de relance en jours après l'échéance.
+- Compte : changer le mot de passe (ancien + nouveau), exporter toutes mes données (fichier JSON), supprimer mon compte (AlertDialog exigeant la saisie de « SUPPRIMER » ; supprime toutes ses données et ses fichiers, puis déconnecte).
+- Données de démo (section de l'étape 6).</pre>
+  <div class="p-check">
+    <strong>À vérifier</strong>
+    <ul>
+      <li>Changer la devise en XOF change l'affichage de tous les montants.</li>
+      <li>La signature s'enregistre et réapparaît après rechargement.</li>
+      <li>Connecté avec un second compte, l'adresse de ta signature renvoie une erreur 404.</li>
+    </ul>
+    <label><input type="checkbox" data-step="10"> Étape validée</label>
+  </div>
+</article>
+
+<article class="prompt" id="p11">
+  <div class="p-head">
+    <span class="p-num">11</span>
+    <div class="p-title">
+      <h3>Quittances et reçus PDF</h3>
+      <p>Des documents conformes, générés en un clic, archivés et retrouvables.</p>
+      <div class="p-meta"><span class="phase v1">V1</span></div>
+    </div>
+    <div class="p-tools"><button class="copy" data-copy="c11" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="c11">Étape 11 : quittances de loyer et reçus en PDF avec @react-pdf/renderer.
+
+Règle métier (France, loi du 6 juillet 1989, article 21) : la quittance est gratuite et n'est délivrée que si l'échéance est intégralement payée. En cas de paiement partiel, on délivre un « Reçu de paiement partiel ». L'interface choisit automatiquement le bon document.
+
+Données
+- Ajoute la collection documents : id, owner_id, lease_id, rent_due_id, kind ('quittance' | 'recu' | 'avis_echeance' | 'autre'), file_path, created_at, avec ses fonctions dans src/lib/data/documents.ts.
+
+Gabarit quittance (src/lib/pdf/quittance.tsx, A4, Helvetica, marges 48pt, sobre)
+- Titre « Quittance de loyer » et « Période du 1er octobre 2026 au 31 octobre 2026 ».
+- Bloc Bailleur (nom ou raison sociale, adresse) et bloc Locataire (nom, adresse du logement loué).
+- Tableau : Loyer hors charges, Provision sur charges, Total ; montants alignés à droite.
+- Texte : « Je soussigné(e) [bailleur], propriétaire du logement désigné ci-dessus, déclare avoir reçu de [locataire] la somme de [total] ([total en lettres]) au titre du loyer et des charges de la période indiquée, et lui en donne quittance, sous réserve de tous mes droits. »
+- Date du paiement. « Fait à [ville du bailleur], le [date] ». Signature si disponible.
+- Pied : « Cette quittance annule tous les reçus qui auraient pu être établis précédemment en cas de paiement partiel du montant du présent terme. »
+- src/lib/domain/number-to-words.ts : montant en toutes lettres en français, euros et centimes (« huit cent soixante-dix euros »), avec tests Vitest couvrant 0, 1, 21, 71, 80, 81, 100, 200, 1 000, 1 150,50.
+
+Gabarit reçu : même structure, titre « Reçu de paiement partiel », montant reçu, date, reste dû. Le mot « quittance » n'apparaît pas.
+
+Génération
+- Route src/app/api/documents/[dueId]/route.ts (export const runtime = 'nodejs') : vérifie que l'échéance appartient à l'utilisateur, choisit quittance ou reçu selon le statut, génère le PDF (renderToBuffer), l'enregistre avec saveFile sous [lease_id]/[AAAA-MM]-quittance.pdf (ou -recu-[horodatage].pdf), ajoute une entrée documents, et renvoie le PDF en téléchargement avec un nom lisible « Quittance-2026-10-Dupont.pdf ».
+- Active « Télécharger la quittance » dans /loyers, la grille annuelle et /baux/[id].
+- Dans /loyers, action « Générer les quittances du mois » pour toutes les échéances payées, avec progression.
+- Onglet « Documents » dans /baux/[id] : liste des documents, téléchargement via /api/files.</pre>
+  <div class="p-check">
+    <strong>À vérifier</strong>
+    <ul>
+      <li>Une échéance payée donne une quittance, une partielle donne un reçu.</li>
+      <li>Accents, montant en lettres et signature corrects dans le PDF.</li>
+      <li>Le fichier apparaît dans <code>.data/files</code> et dans l'onglet Documents du bail.</li>
+    </ul>
+    <label><input type="checkbox" data-step="11"> Étape validée</label>
+  </div>
+</article>
+
+<article class="prompt" id="p12">
+  <div class="p-head">
+    <span class="p-num">12</span>
+    <div class="p-title">
+      <h3>Exports comptables</h3>
+      <p>CSV et Excel pour le comptable et la déclaration de revenus fonciers.</p>
+      <div class="p-meta"><span class="phase v1">V1</span></div>
+    </div>
+    <div class="p-tools"><button class="copy" data-copy="c12" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="c12">Étape 12 : exports pour la comptabilité et la déclaration de revenus.
+
+Sur /loyers/annuel, bouton « Exporter » avec un menu :
+1. « Paiements de l'année (CSV) » : une ligne par paiement : date, locataire, bien, période, montant, dont loyer, dont charges, mode, référence. Chaque paiement est ventilé entre loyer et charges au prorata de l'échéance.
+2. « Récapitulatif par bien (CSV) » : par bien, loyers hors charges encaissés, charges encaissées, total, nombre de mois soldés, impayés restants. Base : la date de paiement dans l'année civile (et non la période), car ce sont les loyers effectivement encaissés qui se déclarent.
+3. « Classeur Excel (.xlsx) » avec ExcelJS : onglet Grille (même présentation que la vue annuelle, cellules colorées par statut), onglet Paiements, onglet Récap par bien. Format monétaire, en-têtes en gras, volets figés, largeurs de colonnes ajustées.
+
+Contraintes CSV pour Excel en français : séparateur point-virgule, virgule décimale, UTF-8 avec BOM, dates JJ/MM/AAAA.
+
+Génération côté serveur dans src/app/api/exports/[type]/route.ts, avec requireUser() et uniquement via src/lib/data. Ventilation et format CSV en fonctions pures dans src/lib/domain/, avec tests Vitest (y compris arrondis au centime).</pre>
+  <div class="p-check">
+    <strong>À vérifier</strong>
+    <ul>
+      <li>Le CSV s'ouvre dans Excel sans caractères cassés, montants en colonnes séparées.</li>
+      <li>La somme « dont loyer » + « dont charges » égale le montant de chaque ligne au centime près.</li>
+    </ul>
+    <label><input type="checkbox" data-step="12"> Étape validée</label>
+  </div>
+</article>
+
+<article class="prompt" id="p13">
+  <div class="p-head">
+    <span class="p-num">13</span>
+    <div class="p-title">
+      <h3>Avis, relances et tâches du jour</h3>
+      <p>Les e-mails sont rédigés, prévisualisés et classés dans une boîte d'envoi locale. Rien ne part réellement.</p>
+      <div class="p-meta"><span class="phase v1">V1</span></div>
+    </div>
+    <div class="p-tools"><button class="copy" data-copy="c13" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="c13">Étape 13 : avis d'échéance et relances. Pour l'instant aucun e-mail n'est réellement envoyé : ils sont enregistrés dans une boîte d'envoi locale. L'envoi réel sera branché plus tard en modifiant uniquement src/lib/email/send.ts.
+
+Données
+- Ajoute au bail : auto_reminders (booléen, false par défaut).
+- Ajoute au profil : payment_instructions (texte), notice_days_before (5 par défaut), last_daily_run (date).
+- Nouvelle collection outbox : id, owner_id, rent_due_id, kind ('avis_echeance' | 'relance_1' | 'relance_2' | 'relance_manuelle' | 'quittance'), to, subject, html, attachment_path, created_at. Pour un même rent_due_id, un seul message de chaque kind, sauf relance_manuelle.
+
+Modèles (React Email, dossier src/emails/, rendus en HTML avec @react-email/render). Ton courtois, signés au nom du bailleur :
+- avis-echeance : « Votre loyer de [mois] », [notice_days_before] jours avant l'échéance : montant, date, instructions de paiement du profil.
+- relance-1 : rappel amiable à J + reminder_days_after_due.
+- relance-2 : second rappel à J + 15, plus ferme, toujours courtois.
+- quittance : la quittance PDF en pièce jointe.
+
+Envoi simulé
+- src/lib/email/send.ts : sendEmail({ ownerId, rentDueId, kind, to, subject, html, attachmentPath }) enregistre le message dans outbox et renvoie { ok }.
+- Page /parametres/boite-envoi : liste des messages (date, destinataire, objet, type), filtre par type, aperçu du HTML dans un iframe (srcdoc, sandbox), lien vers la pièce jointe.
+- Page /parametres/modeles : aperçu de chaque modèle avec des données d'exemple.
+
+Envoi manuel
+- Active « Envoyer une relance » (/loyers, tableau de bord) : Dialog avec aperçu modifiable, puis sendEmail (kind relance_manuelle). La ligne affiche ensuite « Relancé le 12/10 ».
+- Active « Envoyer la quittance par e-mail ».
+- Ces actions sont désactivées si le locataire n'a pas d'e-mail, avec un tooltip qui l'explique.
+
+Tâches du jour (uniquement pour les baux avec auto_reminders, case « Relances et quittances automatiques » sur /baux/[id])
+- src/lib/daily.ts : runDailyTasks(ownerId, today) génère les échéances, puis crée les avis d'échéance, les relances dues et les quittances des échéances soldées depuis la dernière exécution. Pas de doublon grâce à la règle de la collection outbox. Fonction testée avec Vitest en simulant plusieurs dates.
+- Exécutée automatiquement une fois par jour, au premier chargement du layout (app) (compare today à last_daily_run).
+- Bouton « Lancer les tâches du jour » dans /parametres, avec un résumé : « 2 avis, 1 relance, 3 quittances ».</pre>
+  <div class="p-check">
+    <strong>À vérifier</strong>
+    <ul>
+      <li>« Envoyer une relance » ajoute un message lisible dans la boîte d'envoi.</li>
+      <li>Lancer deux fois les tâches du jour ne crée aucun doublon.</li>
+      <li>Un locataire sans e-mail : les boutons d'envoi sont désactivés avec une explication.</li>
+    </ul>
+    <label><input type="checkbox" data-step="13"> Étape validée</label>
+  </div>
+</article>
+
+<div class="phase-divider">Finition</div>
+
+<article class="prompt" id="p14">
+  <div class="p-head">
+    <span class="p-num">14</span>
+    <div class="p-title">
+      <h3>Landing page</h3>
+      <p>Une page qui convertit des propriétaires sceptiques en inscrits.</p>
+      <div class="p-meta"><span class="phase launch">Finition</span></div>
+    </div>
+    <div class="p-tools"><button class="copy" data-copy="c14" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="c14">Étape 14 : la landing page marketing (src/app/(marketing)/page.tsx).
+
+Tu es un designer et développeur front-end de classe mondiale, spécialisé dans les landing pages SaaS à haute conversion, avec 15 ans d'expérience et des projets présentés sur Awwwards et Dribbble. Objectif unique de la page : la création de compte. Cible : propriétaires bailleurs particuliers qui suivent leurs loyers sur Excel ou sur un carnet, souvent méfiants envers les logiciels.
+
+Direction artistique
+- Même palette que l'application (vert bouteille, fonds légèrement teintés de vert), beaucoup d'air.
+- Titres expressifs : Geist 600, interlettrage serré, 56 à 72px sur desktop, 36 à 40px sur mobile. Corps 17 à 18px, interlignage généreux.
+- Le produit est le héros : visuels recréés en composants React (pas de captures floues), en particulier la grille annuelle colorée.
+- Animations sobres avec motion : apparition au défilement une seule fois ; au chargement du hero, les cellules de la grille se remplissent une à une. Respecte prefers-reduced-motion.
+- Interdits : dégradés violets, emoji, illustrations 3D génériques, photos de banque d'images.
+
+Sections
+1. Navigation collante : logo, ancres (Fonctionnalités, Tarifs, FAQ), « Se connecter », bouton « Commencer gratuitement ».
+2. Hero : titre « Sachez qui a payé son loyer. En un coup d'œil. » ; sous-titre « Bailo remplace votre tableur : loyers du mois, suivi annuel, quittances et relances automatiques. Gratuit jusqu'à 2 logements. » ; bouton principal + lien « Voir la démo ». Visuel : la grille annuelle dans un cadre de navigateur, en légère perspective, avec une notification flottante « Paiement de 870 € reçu · M. Dupont ».
+3. Bandeau de réassurance : « Vos données restent privées », « Quittances conformes à la loi de 1989 », « Export Excel en 1 clic ».
+4. Avant / Après : à gauche le tableur raturé, les rappels oubliés, les quittances faites à la main ; à droite la même situation avec Bailo.
+5. Fonctionnalités en bento (grille asymétrique de 6 cartes) : Loyers du mois, Suivi annuel, Quittances en 1 clic, Relances automatiques, Export fiscal, Sur mobile. Chaque carte contient un mini-visuel produit.
+6. Comment ça marche, 3 étapes : Ajoutez vos biens · Créez vos baux · Encaissez, Bailo s'occupe du reste.
+7. Témoignages : 3 cartes. Contenu d'exemple, marqué en commentaire dans le code comme à remplacer.
+8. Tarifs : Découverte 0 € (2 logements, suivi, quittances) · Bailleur 9 €/mois (20 logements, relances automatiques, exports Excel) · SCI 19 €/mois (illimité, plusieurs utilisateurs, badge « Bientôt »). Bascule mensuel / annuel (−20 %).
+9. FAQ en accordéon : confidentialité des données, conformité des quittances, import depuis Excel, devises, résiliation, que deviennent mes données si j'arrête.
+10. CTA final pleine largeur sur fond vert bouteille.
+11. Pied de page : Mentions légales, Confidentialité, CGU, contact.
+
+Technique et SEO
+- Server Components ; seuls les éléments animés sont des composants client. next/image, next/font, aucun script tiers.
+- metadata complète (title, description, Open Graph), image OG générée avec next/og (opengraph-image.tsx), sitemap.ts, robots.ts, JSON-LD SoftwareApplication.
+- Objectif Lighthouse 95 ou plus sur les 4 axes. Parfait de 360px à 1440px.
+- Crée aussi les pages légales /mentions-legales, /confidentialite, /cgu avec une structure de titres à compléter.</pre>
+  <div class="p-check">
+    <strong>À vérifier</strong>
+    <ul>
+      <li>Lighthouse (outils de développement de Chrome) en mobile : 95 ou plus en Performance et Accessibilité.</li>
+      <li>Rendu propre de 360px à 1440px, en clair et en sombre.</li>
+      <li>Les témoignages d'exemple sont signalés comme à remplacer.</li>
+    </ul>
+    <label><input type="checkbox" data-step="14"> Étape validée</label>
+  </div>
+</article>
+
+<article class="prompt" id="p15">
+  <div class="p-head">
+    <span class="p-num">15</span>
+    <div class="p-title">
+      <h3>Finitions et tests en local</h3>
+      <p>Audit complet, isolation des comptes, tests de bout en bout, documentation.</p>
+      <div class="p-meta"><span class="phase launch">Finition</span></div>
+    </div>
+    <div class="p-tools"><button class="copy" data-copy="c15" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="c15">Étape 15 : finitions et fiabilité, en local. Fais d'abord un audit et donne-moi la liste de ce que tu comptes changer, puis corrige.
+
+Qualité
+- loading.tsx, error.tsx (avec bouton « Réessayer ») et not-found.tsx pour chaque segment de (app).
+- Vérifie chaque page à 375px, 768px et 1280px : aucun défilement horizontal de la page, cibles tactiles de 44px minimum.
+- États vides partout, messages d'erreur en français, toasts cohérents.
+- Accessibilité : passe axe-core sur chaque page et corrige contrastes, labels, ordre de focus.
+
+Architecture
+- Vérifie qu'aucun fichier hors de src/lib/data n'importe node:fs ou src/lib/data/local. Liste et corrige les écarts.
+- Vérifie que chaque Server Action et chaque route API appelle requireUser() et valide ses entrées avec Zod.
+
+Isolation et sécurité
+- Test (src/tests/isolation.test.ts) : crée deux utilisateurs et vérifie que B ne peut ni lire, ni modifier, ni supprimer les données de A, ni rattacher un bail à un bien de A, ni un paiement à une échéance de A, ni lire ses fichiers.
+- En-têtes de sécurité dans next.config : Content-Security-Policy adaptée, X-Frame-Options, Referrer-Policy.
+- Uploads : types et tailles limités.
+
+Tests
+- Vitest : format, money, rent-status, rent-dues, number-to-words, tableau de bord, pivot annuel, ventilation loyer / charges, tâches du jour.
+- Playwright : parcours complet inscription → bien → locataire → bail → encaissement → téléchargement de quittance → relance visible dans la boîte d'envoi.
+
+Documentation et nettoyage
+- README : prérequis (Node.js), installation, création de .env.local, commandes (dev, test, build), emplacement des données (.data/), comment les sauvegarder et les réinitialiser, architecture, et la liste des modules à remplacer plus tard pour brancher une base (src/lib/data, src/lib/auth, src/lib/email/send.ts).
+- Script npm run reset-data qui sauvegarde .data/ dans une copie horodatée puis repart d'un fichier vide.
+- Vérifie que npm run build puis npm start fonctionnent.
+- Supprime /dev/sante.</pre>
+  <div class="p-check">
+    <strong>À vérifier</strong>
+    <ul>
+      <li><code>npm run test</code> et le test Playwright passent.</li>
+      <li><code>npm run build</code> puis <code>npm start</code> : l'app fonctionne comme en développement.</li>
+      <li>Le README te permet de relancer le projet seul, sur un autre ordinateur.</li>
+    </ul>
+    <label><input type="checkbox" data-step="15"> Étape validée</label>
+  </div>
+</article>
+
+        </div>
+      </section>
+
+      <!-- ========== DÉPANNAGE ========== -->
+      <section id="depannage">
+        <header>
+          <span class="eyebrow">Dépannage</span>
+          <h2>Six prompts pour quand ça coince</h2>
+          <p class="intro">Le vibe-coding échoue rarement sur une grosse erreur. Il échoue sur des petites corrections empilées. Ces prompts imposent à l'IA de diagnostiquer avant de toucher au code.</p>
+        </header>
+        <div class="prompts">
+
+<article class="prompt">
+  <div class="p-head">
+    <span class="p-num">A</span>
+    <div class="p-title"><h3>Données perdues ou non enregistrées</h3><p>Un ajout disparaît, ou le fichier de données est abîmé.</p></div>
+    <div class="p-tools"><button class="copy" data-copy="d1" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="d1">Problème : [décris ce qui disparaît ou ne s'enregistre pas], en faisant [action].
+Erreur éventuelle : [colle l'erreur exacte].
+
+Ne change pas de mode de stockage et n'installe pas de base de données. Vérifie dans cet ordre :
+1. La Server Action passe-t-elle bien par une fonction de src/lib/data, avec le bon ownerId ?
+2. L'écriture passe-t-elle par la file d'attente et l'écriture atomique du store, ou deux écritures peuvent-elles s'écraser ?
+3. Le fichier .data/bailo.json est-il un JSON valide ? Si non, propose une réparation sans perdre de données.
+Explique la cause en 3 lignes avant de corriger.</pre>
+</article>
+
+<article class="prompt">
+  <div class="p-head">
+    <span class="p-num">B</span>
+    <div class="p-title"><h3>L'écran ne se met pas à jour</h3><p>Il faut recharger pour voir le paiement enregistré.</p></div>
+    <div class="p-tools"><button class="copy" data-copy="d2" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="d2">Après [action], la page [route] n'affiche la nouvelle donnée qu'après rechargement.
+Vérifie la Server Action concernée : revalidatePath sur toutes les routes impactées (/loyers, /loyers/annuel, /tableau-de-bord, et la page de détail concernée). Vérifie qu'aucune page dépendant de l'utilisateur n'est rendue statiquement ou mise en cache.
+Corrige à la source, sans ajouter router.refresh() partout.</pre>
+</article>
+
+<article class="prompt">
+  <div class="p-head">
+    <span class="p-num">C</span>
+    <div class="p-title"><h3>Erreur d'hydratation ou page blanche</h3><p>Message rouge dans la console, dates décalées d'un jour.</p></div>
+    <div class="p-tools"><button class="copy" data-copy="d3" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="d3">J'ai cette erreur dans la console : [colle l'erreur].
+Identifie le composant en cause. Causes probables : date formatée différemment entre serveur et client (fuseau horaire, new Date() sur une chaîne YYYY-MM-DD), window ou localStorage utilisé dans un Server Component, composant interactif sans "use client", module serveur (node:fs) importé dans un composant client.
+Corrige à la source. N'utilise pas suppressHydrationWarning, sauf sur la balise html pour next-themes.</pre>
+</article>
+
+<article class="prompt">
+  <div class="p-head">
+    <span class="p-num">D</span>
+    <div class="p-title"><h3>L'IA tourne en rond</h3><p>Trois corrections, toujours le même bug.</p></div>
+    <div class="p-tools"><button class="copy" data-copy="d4" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="d4">Stop. Tu as tenté plusieurs corrections sans succès. Ne modifie plus rien pour l'instant.
+1. Explique en 5 lignes ce que tu as compris du problème.
+2. Propose 2 hypothèses distinctes sur sa cause.
+3. Dis-moi quels logs ajouter pour trancher entre les deux.
+4. Attends mon retour avec le résultat des logs avant de corriger.
+Si tes corrections précédentes ont ajouté du code inutile, liste-le pour qu'on le retire.</pre>
+</article>
+
+<article class="prompt">
+  <div class="p-head">
+    <span class="p-num">E</span>
+    <div class="p-title"><h3>Retour au cadre</h3><p>L'IA a lu le fichier depuis une page, inventé un champ ou proposé une base de données.</p></div>
+    <div class="p-tools"><button class="copy" data-copy="d5" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="d5">Relis les instructions du projet Bailo. Tu as [accédé aux données sans passer par src/lib/data / inventé un champ / changé de librairie / proposé d'installer une base de données].
+Annule ce changement et propose une solution conforme au modèle de données et à la stack imposés. Si le modèle doit vraiment évoluer, explique pourquoi avant de modifier les types.</pre>
+</article>
+
+<article class="prompt">
+  <div class="p-head">
+    <span class="p-num">F</span>
+    <div class="p-title"><h3>Revue de sécurité</h3><p>À lancer à la fin du MVP puis à la fin de la V1.</p></div>
+    <div class="p-tools"><button class="copy" data-copy="d6" type="button">Copier</button></div>
+  </div>
+<pre class="code" id="d6">Fais une revue de sécurité de tout le projet, sans rien modifier :
+- fonctions de src/lib/data qui ne filtrent pas par ownerId
+- Server Actions ou routes API sans requireUser()
+- identifiants reçus du navigateur sans contrôle d'appartenance
+- accès aux fichiers de .data/files sans contrôle, chemins contenant « .. »
+- session : cookie non signé, secret en dur dans le code, mots de passe mal hachés
+- uploads sans contrôle de type et de taille
+Donne une liste priorisée (critique, important, mineur) avec fichier, ligne et correction proposée.</pre>
+</article>
+
+        </div>
+      </section>
+
+      <!-- ========== SUITE ========== -->
+      <section id="suite">
+        <header>
+          <span class="eyebrow">Plus tard</span>
+          <h2>Ce qui viendra ensuite, par ordre de valeur</h2>
+          <p class="intro">Rien de tout cela n'est nécessaire pour utiliser Bailo en local. L'architecture est pensée pour que chaque point s'ajoute sans réécrire les écrans.</p>
+        </header>
+        <div class="cols">
+          <div class="panel">
+            <span class="phase v2">Plus tard</span>
+            <h3>Brancher la base de données</h3>
+            <p>Remplacer <code>src/lib/data</code> et <code>src/lib/auth</code> par la vraie base et son authentification, puis importer le contenu de <code>.data/bailo.json</code>. Les pages ne changent pas.</p>
+          </div>
+          <div class="panel">
+            <span class="phase v2">Plus tard</span>
+            <h3>Envoi réel des e-mails</h3>
+            <p>Brancher un service d'envoi dans <code>src/lib/email/send.ts</code>. La boîte d'envoi devient l'historique des envois.</p>
+          </div>
+          <div class="panel">
+            <span class="phase v2">Plus tard</span>
+            <h3>Révision annuelle du loyer</h3>
+            <p>Indexation sur l'IRL publié par l'INSEE : calcul du nouveau loyer à la date anniversaire et lettre d'information au locataire.</p>
+          </div>
+          <div class="panel">
+            <span class="phase v2">Plus tard</span>
+            <h3>Import depuis Excel</h3>
+            <p>Glisser le tableur existant, faire correspondre les colonnes, récupérer l'historique.</p>
+          </div>
+          <div class="panel">
+            <span class="phase v2">Plus tard</span>
+            <h3>Mise en ligne et abonnements</h3>
+            <p>Hébergement, nom de domaine, formules payantes avec limites par nombre de logements.</p>
+          </div>
+          <div class="panel">
+            <span class="phase v2">Plus tard</span>
+            <h3>Espace locataire</h3>
+            <p>Un accès pour que le locataire consulte ses échéances et télécharge ses quittances.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(function () {
+  /* ---- Grille annuelle d'exemple ---- */
+  var months = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+  var nowIdx = 9; // octobre
+  var rows = [
+    { who: 'Dupont M.', what: 'T2 rue des Lilas', s: 'ppppppppppaa' },
+    { who: 'Diallo A.', what: 'Studio Gare', s: 'pppppppppiaa' },
+    { who: 'Martin & Rossi', what: 'Maison des Chênes', s: 'pppprpppppaa' },
+    { who: 'Nguyen L.', what: 'T3 quai du Port', s: '----pppppxaa' },
+    { who: 'Bernard C.', what: 'T1 bis Centre', s: 'pppppppp----' }
+  ];
+  var map = { p: 'paye', r: 'partiel', i: 'impaye', a: 'a_venir', '-': 'vide', x: 'partiel' };
+  var label = { paye: 'payé', partiel: 'partiel', impaye: 'impayé', a_venir: 'à venir', vide: 'hors bail' };
+  var full = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  var yr = document.getElementById('yr');
+  if (yr) {
+    var html = '<span></span>';
+    months.forEach(function (m, i) { html += '<span class="mh' + (i === nowIdx ? ' now' : '') + '">' + m + '</span>'; });
+    rows.forEach(function (r) {
+      html += '<div class="who"><b>' + r.who.replace('&', '&amp;') + '</b><span>' + r.what + '</span></div>';
+      r.s.split('').forEach(function (c, i) {
+        var st = map[c];
+        html += '<span class="cell ' + st + '" role="img" aria-label="' + r.who.replace('&', '&amp;') + ', ' + full[i] + ' 2026, ' + label[st] + '"></span>';
+      });
+    });
+    yr.innerHTML = html;
+  }
+
+  /* ---- Copie ---- */
+  var toast = document.getElementById('toast'), tTimer;
+  function say(msg) {
+    toast.textContent = msg; toast.hidden = false;
+    clearTimeout(tTimer); tTimer = setTimeout(function () { toast.hidden = true; }, 2200);
+  }
+  function selectNode(node) {
+    var range = document.createRange(); range.selectNodeContents(node);
+    var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+  }
+  function copyText(text, node, btn) {
+    var done = function () {
+      if (btn) { var t = btn.textContent; btn.textContent = 'Copié'; btn.classList.add('ok'); setTimeout(function () { btn.textContent = t; btn.classList.remove('ok'); }, 1600); }
+      say('Copié dans le presse-papiers');
+    };
+    var fail = function () {
+      if (node) { selectNode(node); say('Texte sélectionné : appuie sur ⌘C ou Ctrl+C'); }
+      else say('Copie refusée par le navigateur');
+    };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fail);
+      else fail();
+    } catch (e) { fail(); }
+  }
+  document.querySelectorAll('[data-copy]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var pre = document.getElementById(btn.getAttribute('data-copy'));
+      copyText(pre.textContent, pre, btn);
+    });
+  });
+  var all = document.getElementById('copy-all');
+  if (all) all.addEventListener('click', function () {
+    var parts = [];
+    for (var i = 0; i <= 15; i++) {
+      var card = document.getElementById('p' + i);
+      var title = card.querySelector('h3').textContent;
+      parts.push('=============== PROMPT ' + i + ' · ' + title + ' ===============\n\n' + document.getElementById('c' + i).textContent);
+    }
+    copyText(parts.join('\n\n\n'), null, all);
+  });
+
+  /* ---- Progression (mémorisée dans ce navigateur) ---- */
+  var KEY = 'bailo-playbook-steps';
+  var state = {};
+  try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+  var boxes = document.querySelectorAll('[data-step]');
+  function render() {
+    var n = 0;
+    boxes.forEach(function (b) {
+      var on = !!state[b.getAttribute('data-step')];
+      b.checked = on; if (on) n++;
+      var card = b.closest('.prompt'); if (card) card.classList.toggle('done', on);
+    });
+    document.getElementById('prog-label').textContent = n + ' / 16 étapes validées';
+    document.getElementById('prog-bar').style.width = (n / 16 * 100) + '%';
+  }
+  boxes.forEach(function (b) {
+    b.addEventListener('change', function () {
+      state[b.getAttribute('data-step')] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+      render();
+    });
+  });
+  render();
+
+  /* ---- Sommaire actif ---- */
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          links.forEach(function (a) { a.classList.toggle('on', a.getAttribute('href') === '#' + en.target.id); });
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    document.querySelectorAll('main > section').forEach(function (s) { io.observe(s); });
+  }
+})();
+</script>
