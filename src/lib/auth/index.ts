@@ -125,11 +125,15 @@ export async function signUp(params: {
       })
 
       if (error || !data?.user) {
+        let msg = error?.message || "Erreur lors de l'inscription."
+        if (msg.toLowerCase().includes("already")) {
+          msg = "Un compte existe déjà avec cette adresse e-mail."
+        } else if (msg.toLowerCase().includes("fetch failed")) {
+          msg = "La connexion à la base de données a expiré. Veuillez réessayer."
+        }
         return {
           success: false,
-          error: error?.message?.includes("already")
-            ? "Un compte existe déjà avec cette adresse e-mail."
-            : error?.message || "Erreur lors de l'inscription.",
+          error: msg,
         }
       }
 
