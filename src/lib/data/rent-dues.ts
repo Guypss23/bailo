@@ -1,5 +1,17 @@
 import "server-only"
+import { isSupabaseConfigured } from "@/lib/supabase"
 import { readStore, mutateStore, generateUUID, currentISO } from "./local/store"
+import {
+  listRentDuesSupabase,
+  getRentDueSupabase,
+  getRentDueByLeaseAndPeriodSupabase,
+  createRentDueSupabase,
+  updateRentDueSupabase,
+  deleteRentDueSupabase,
+  listDueOverviewsSupabase,
+  listEnrichedDueOverviewsSupabase,
+  generateRentDuesSupabase,
+} from "./supabase/rent-dues"
 import type {
   RentDue,
   NewRentDue,
@@ -22,6 +34,9 @@ export async function listRentDues(
     leaseId?: string
   } = {}
 ): Promise<RentDue[]> {
+  if (isSupabaseConfigured()) {
+    return listRentDuesSupabase(ownerId, options)
+  }
   const store = await readStore()
   return store.rent_dues.filter((d) => {
     if (d.owner_id !== ownerId) return false
@@ -35,15 +50,40 @@ export async function getRentDue(
   ownerId: string,
   id: string
 ): Promise<RentDue | null> {
+  if (isSupabaseConfigured()) {
+    return getRentDueSupabase(ownerId, id)
+  }
   const store = await readStore()
   const due = store.rent_dues.find((d) => d.id === id && d.owner_id === ownerId)
   return due ?? null
+}
+
+export async function getRentDueByLeaseAndPeriod(
+  ownerId: string,
+  leaseId: string,
+  period: string
+): Promise<RentDue | null> {
+  if (isSupabaseConfigured()) {
+    return getRentDueByLeaseAndPeriodSupabase(ownerId, leaseId, period)
+  }
+  const store = await readStore()
+  return (
+    store.rent_dues.find(
+      (d) =>
+        d.owner_id === ownerId &&
+        d.lease_id === leaseId &&
+        d.period === period
+    ) ?? null
+  )
 }
 
 export async function createRentDue(
   ownerId: string,
   data: NewRentDue
 ): Promise<RentDue> {
+  if (isSupabaseConfigured()) {
+    return createRentDueSupabase(ownerId, data)
+  }
   return mutateStore((current) => {
     // 1. Verify lease belongs to owner
     const lease = current.leases.find(
@@ -92,6 +132,9 @@ export async function updateRentDue(
   id: string,
   data: Partial<Omit<NewRentDue, "lease_id" | "period">>
 ): Promise<RentDue> {
+  if (isSupabaseConfigured()) {
+    return updateRentDueSupabase(ownerId, id, data)
+  }
   return mutateStore((current) => {
     const index = current.rent_dues.findIndex(
       (d) => d.id === id && d.owner_id === ownerId
@@ -100,9 +143,17 @@ export async function updateRentDue(
       throw new NotFoundError("Échéance", id)
     }
 
+    const currentDue = current.rent_dues[index]
+    const rent_amount = data.rent_amount ?? currentDue.rent_amount
+    const charges_amount = data.charges_amount ?? currentDue.charges_amount
+    const total_amount = data.total_amount ?? rent_amount + charges_amount
+
     const updated: RentDue = {
-      ...current.rent_dues[index],
+      ...currentDue,
       ...data,
+      rent_amount,
+      charges_amount,
+      total_amount,
     }
 
     const nextRentDues = [...current.rent_dues]
@@ -122,6 +173,9 @@ export async function deleteRentDue(
   ownerId: string,
   id: string
 ): Promise<void> {
+  if (isSupabaseConfigured()) {
+    return deleteRentDueSupabase(ownerId, id)
+  }
   return mutateStore((current) => {
     const due = current.rent_dues.find(
       (d) => d.id === id && d.owner_id === ownerId
@@ -130,9 +184,9 @@ export async function deleteRentDue(
       throw new NotFoundError("Échéance", id)
     }
 
-    // Cascade: delete associated payments
-    const nextPayments = current.payments.filter((p) => p.rent_due_id !== id)
+    // Cascade delete: payments associated with this rent due
     const nextRentDues = current.rent_dues.filter((d) => d.id !== id)
+    const nextPayments = current.payments.filter((p) => p.rent_due_id !== id)
 
     return {
       nextData: {
@@ -157,6 +211,9 @@ export async function listDueOverviews(
     tenantId?: string
   } = {}
 ): Promise<RentDueOverview[]> {
+  if (isSupabaseConfigured()) {
+    return listDueOverviewsSupabase(ownerId, filters)
+  }
   const store = await readStore()
   const today = todayISO()
 
@@ -227,6 +284,9 @@ export async function listEnrichedDueOverviews(
     leaseId?: string
   } = {}
 ): Promise<EnrichedDueOverview[]> {
+  if (isSupabaseConfigured()) {
+    return listEnrichedDueOverviewsSupabase(ownerId, options)
+  }
   const store = await readStore()
   const today = todayISO()
 
@@ -273,7 +333,6 @@ export async function listEnrichedDueOverviews(
     }
   }
 
-  // Filter dues
   const dues = store.rent_dues.filter((d) => {
     if (d.owner_id !== ownerId) return false
     if (options.period && d.period !== options.period) return false
@@ -282,14 +341,11 @@ export async function listEnrichedDueOverviews(
   })
 
   return dues.map((due) => {
-    const lease = leasesMap.get(due.lease_id) || null
-    const tenant = lease ? tenantsMap.get(lease.tenant_id) || null : null
-    const property = lease ? propertiesMap.get(lease.property_id) || null : null
+    const lease = leasesMap.get(due.lease_id) ?? null
+    const tenant = lease ? tenantsMap.get(lease.tenant_id) ?? null : null
+    const property = lease ? propertiesMap.get(lease.property_id) ?? null : null
     const duePayments = paymentsByDue.get(due.id) || []
-    // Sort payments by paid_at descending
-    duePayments.sort((a, b) => b.paid_at.localeCompare(a.paid_at))
-
-    const overview = getDueOverview(due, ownerPayments, today)
+    const overview = getDueOverview(due, duePayments, today)
 
     return {
       ...due,
@@ -309,7 +365,6 @@ export async function listEnrichedDueOverviews(
   })
 }
 
-
 /**
  * Generates all missing rent dues for non-draft leases of an owner up to a given period.
  * Returns the count of newly created dues.
@@ -318,6 +373,9 @@ export async function generateRentDues(
   ownerId: string,
   until?: string
 ): Promise<number> {
+  if (isSupabaseConfigured()) {
+    return generateRentDuesSupabase(ownerId, until)
+  }
   return mutateStore((current) => {
     const activeLeases = current.leases.filter(
       (l) => l.owner_id === ownerId && l.status !== "brouillon"

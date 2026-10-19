@@ -1,5 +1,12 @@
 import "server-only"
+import { isSupabaseConfigured } from "@/lib/supabase"
 import { readStore, mutateStore, generateUUID, currentISO } from "./local/store"
+import {
+  listOutboxSupabase,
+  getOutboxMessageSupabase,
+  hasOutboxMessageSupabase,
+  createOutboxMessageSupabase,
+} from "./supabase/outbox"
 import type { OutboxMessage, NewOutboxMessage, OutboxMessageKind } from "./types"
 
 export async function listOutbox(
@@ -9,6 +16,9 @@ export async function listOutbox(
     kind?: OutboxMessageKind
   } = {}
 ): Promise<OutboxMessage[]> {
+  if (isSupabaseConfigured()) {
+    return listOutboxSupabase(ownerId, options)
+  }
   const store = await readStore()
   const messages = store.outbox ?? []
   return messages
@@ -25,6 +35,9 @@ export async function getOutboxMessage(
   ownerId: string,
   id: string
 ): Promise<OutboxMessage | null> {
+  if (isSupabaseConfigured()) {
+    return getOutboxMessageSupabase(ownerId, id)
+  }
   const store = await readStore()
   const messages = store.outbox ?? []
   const msg = messages.find((m) => m.id === id && m.owner_id === ownerId)
@@ -36,6 +49,9 @@ export async function hasOutboxMessage(
   rentDueId: string,
   kind: OutboxMessageKind
 ): Promise<boolean> {
+  if (isSupabaseConfigured()) {
+    return hasOutboxMessageSupabase(ownerId, rentDueId, kind)
+  }
   const store = await readStore()
   const messages = store.outbox ?? []
   return messages.some(
@@ -55,6 +71,9 @@ export async function createOutboxMessage(
   ownerId: string,
   data: NewOutboxMessage
 ): Promise<OutboxMessage> {
+  if (isSupabaseConfigured()) {
+    return createOutboxMessageSupabase(ownerId, data)
+  }
   return mutateStore((current) => {
     const messages = current.outbox ?? []
 

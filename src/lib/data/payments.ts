@@ -1,5 +1,14 @@
 import "server-only"
+import { isSupabaseConfigured } from "@/lib/supabase"
 import { readStore, mutateStore, generateUUID, currentISO } from "./local/store"
+import {
+  listPaymentsSupabase,
+  getPaymentSupabase,
+  createPaymentSupabase,
+  updatePaymentSupabase,
+  deletePaymentSupabase,
+  createBulkPaymentsSupabase,
+} from "./supabase/payments"
 import type { Payment, NewPayment } from "./types"
 import { NotFoundError, ValidationError } from "./errors"
 
@@ -7,6 +16,9 @@ export async function listPayments(
   ownerId: string,
   options: { rentDueId?: string } = {}
 ): Promise<Payment[]> {
+  if (isSupabaseConfigured()) {
+    return listPaymentsSupabase(ownerId, options)
+  }
   const store = await readStore()
   return store.payments.filter((p) => {
     if (p.owner_id !== ownerId) return false
@@ -19,6 +31,9 @@ export async function getPayment(
   ownerId: string,
   id: string
 ): Promise<Payment | null> {
+  if (isSupabaseConfigured()) {
+    return getPaymentSupabase(ownerId, id)
+  }
   const store = await readStore()
   const payment = store.payments.find((p) => p.id === id && p.owner_id === ownerId)
   return payment ?? null
@@ -28,6 +43,9 @@ export async function createPayment(
   ownerId: string,
   data: NewPayment
 ): Promise<Payment> {
+  if (isSupabaseConfigured()) {
+    return createPaymentSupabase(ownerId, data)
+  }
   if (data.amount <= 0) {
     throw new ValidationError("Le montant du paiement doit être strictement positif.")
   }
@@ -67,6 +85,9 @@ export async function deletePayment(
   ownerId: string,
   id: string
 ): Promise<void> {
+  if (isSupabaseConfigured()) {
+    return deletePaymentSupabase(ownerId, id)
+  }
   return mutateStore((current) => {
     const payment = current.payments.find(
       (p) => p.id === id && p.owner_id === ownerId
@@ -90,6 +111,9 @@ export async function updatePayment(
   id: string,
   data: Partial<Omit<NewPayment, "rent_due_id">>
 ): Promise<Payment> {
+  if (isSupabaseConfigured()) {
+    return updatePaymentSupabase(ownerId, id, data)
+  }
   if (data.amount !== undefined && data.amount <= 0) {
     throw new ValidationError("Le montant du paiement doit être strictement positif.")
   }
@@ -131,6 +155,9 @@ export async function createBulkPayments(
     note?: string | null
   }>
 ): Promise<Payment[]> {
+  if (isSupabaseConfigured()) {
+    return createBulkPaymentsSupabase(ownerId, items)
+  }
   const validItems = items.filter((item) => item.amount > 0)
   if (validItems.length === 0) {
     return []
@@ -169,4 +196,3 @@ export async function createBulkPayments(
     }
   })
 }
-

@@ -10,6 +10,11 @@ import {
   type User,
   type Profile,
 } from "@/lib/data"
+import {
+  isSupabaseConfigured,
+  getSupabaseAdmin,
+  getSupabaseClient,
+} from "@/lib/supabase"
 import { hashPassword, verifyPassword } from "./password"
 import {
   signSession,
@@ -101,7 +106,7 @@ export async function requireUser(): Promise<AuthenticatedUser> {
 }
 
 /**
- * Registers a new local user and creates their profile.
+ * Registers a new user and creates their profile.
  */
 export async function signUp(params: {
   email: string
@@ -109,6 +114,58 @@ export async function signUp(params: {
   full_name: string
 }): Promise<{ success: boolean; error?: string; session?: AuthenticatedUser }> {
   const normalizedEmail = params.email.trim().toLowerCase()
+
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = getSupabaseAdmin()
+      const { data, error } = await supabase.auth.admin.createUser({
+        email: normalizedEmail,
+        password: params.password,
+        email_confirm: true,
+      })
+
+      if (error || !data?.user) {
+        return {
+          success: false,
+          error: error?.message?.includes("already")
+            ? "Un compte existe déjà avec cette adresse e-mail."
+            : error?.message || "Erreur lors de l'inscription.",
+        }
+      }
+
+      const user: User = {
+        id: data.user.id,
+        email: normalizedEmail,
+        password_hash: "",
+        created_at: data.user.created_at,
+      }
+
+      const profile = await createProfile(user.id, {
+        full_name: params.full_name.trim(),
+        company_name: null,
+        address: null,
+        city: null,
+        phone: null,
+        currency: "XAF",
+        reminder_days_after_due: 5,
+      })
+
+      const token = signSession(user.id)
+      const cookieStore = await cookies()
+      cookieStore.set(SESSION_COOKIE_NAME, token, SESSION_COOKIE_OPTIONS)
+
+      return {
+        success: true,
+        session: { user, profile },
+      }
+    } catch (err: unknown) {
+      console.error("Error in Supabase signUp:", err)
+      return {
+        success: false,
+        error: "Erreur lors de la création du compte.",
+      }
+    }
+  }
 
   const existing = await getUserByEmail(normalizedEmail)
   if (existing) {
@@ -146,7 +203,7 @@ export async function signUp(params: {
 }
 
 /**
- * Signs in an existing local user.
+ * Signs in an existing user.
  */
 export async function signIn(params: {
   email: string
@@ -163,11 +220,65 @@ export async function signIn(params: {
     }
   }
 
-  // 2. Fetch user
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = getSupabaseClient()
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password: params.password,
+      })
+
+      if (error || !data?.user) {
+        recordLoginAttempt(normalizedEmail)
+        return {
+          success: false,
+          error: "E-mail ou mot de passe incorrect.",
+        }
+      }
+
+      resetLoginAttempts(normalizedEmail)
+
+      const user: User = {
+        id: data.user.id,
+        email: normalizedEmail,
+        password_hash: "",
+        created_at: data.user.created_at,
+      }
+
+      let profile = await getProfile(user.id)
+      if (!profile) {
+        profile = await createProfile(user.id, {
+          full_name: user.email.split("@")[0],
+          company_name: null,
+          address: null,
+          city: null,
+          phone: null,
+          currency: "XAF",
+          reminder_days_after_due: 5,
+        })
+      }
+
+      const token = signSession(user.id)
+      const cookieStore = await cookies()
+      cookieStore.set(SESSION_COOKIE_NAME, token, SESSION_COOKIE_OPTIONS)
+
+      return {
+        success: true,
+        session: { user, profile },
+      }
+    } catch (err: unknown) {
+      console.error("Error in Supabase signIn:", err)
+      return {
+        success: false,
+        error: "Erreur de connexion.",
+      }
+    }
+  }
+
+  // 2. Fetch user (local fallback)
   const user = await getUserByEmail(normalizedEmail)
   if (!user) {
     recordLoginAttempt(normalizedEmail)
-    // Generic error to not reveal account existence
     return {
       success: false,
       error: "E-mail ou mot de passe incorrect.",

@@ -1,5 +1,14 @@
 import "server-only"
+import { isSupabaseConfigured } from "@/lib/supabase"
 import { readStore, mutateStore, generateUUID, currentISO } from "./local/store"
+import {
+  listPropertiesSupabase,
+  getPropertySupabase,
+  createPropertySupabase,
+  updatePropertySupabase,
+  archivePropertySupabase,
+  deletePropertySupabase,
+} from "./supabase/properties"
 import type { Property, NewProperty } from "./types"
 import { NotFoundError, HasLeasesError } from "./errors"
 
@@ -7,6 +16,9 @@ export async function listProperties(
   ownerId: string,
   options: { includeArchived?: boolean } = {}
 ): Promise<Property[]> {
+  if (isSupabaseConfigured()) {
+    return listPropertiesSupabase(ownerId, options)
+  }
   const store = await readStore()
   return store.properties.filter((p) => {
     if (p.owner_id !== ownerId) return false
@@ -19,6 +31,9 @@ export async function getProperty(
   ownerId: string,
   id: string
 ): Promise<Property | null> {
+  if (isSupabaseConfigured()) {
+    return getPropertySupabase(ownerId, id)
+  }
   const store = await readStore()
   const property = store.properties.find((p) => p.id === id && p.owner_id === ownerId)
   return property ?? null
@@ -28,6 +43,9 @@ export async function createProperty(
   ownerId: string,
   data: NewProperty
 ): Promise<Property> {
+  if (isSupabaseConfigured()) {
+    return createPropertySupabase(ownerId, data)
+  }
   return mutateStore((current) => {
     const newProperty: Property = {
       id: generateUUID(),
@@ -60,6 +78,9 @@ export async function updateProperty(
   id: string,
   data: Partial<NewProperty>
 ): Promise<Property> {
+  if (isSupabaseConfigured()) {
+    return updatePropertySupabase(ownerId, id, data)
+  }
   return mutateStore((current) => {
     const index = current.properties.findIndex(
       (p) => p.id === id && p.owner_id === ownerId
@@ -91,6 +112,9 @@ export async function archiveProperty(
   id: string,
   archive = true
 ): Promise<Property> {
+  if (isSupabaseConfigured()) {
+    return archivePropertySupabase(ownerId, id, archive)
+  }
   return updateProperty(ownerId, id, {
     archived_at: archive ? currentISO() : null,
   })
@@ -100,6 +124,9 @@ export async function deleteProperty(
   ownerId: string,
   id: string
 ): Promise<void> {
+  if (isSupabaseConfigured()) {
+    return deletePropertySupabase(ownerId, id)
+  }
   return mutateStore((current) => {
     const property = current.properties.find(
       (p) => p.id === id && p.owner_id === ownerId

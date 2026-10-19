@@ -1,5 +1,16 @@
 import "server-only"
+import { isSupabaseConfigured } from "@/lib/supabase"
 import { readStore, mutateStore, generateUUID, currentISO } from "./local/store"
+import {
+  listLeasesSupabase,
+  getLeaseSupabase,
+  createLeaseSupabase,
+  updateLeaseSupabase,
+  deleteLeaseSupabase,
+  leaseHasPaymentsSupabase,
+  adjustLeaseRentSupabase,
+  terminateLeaseSupabase,
+} from "./supabase/leases"
 import type { Lease, NewLease, LeaseStatus } from "./types"
 import { NotFoundError, LeaseOverlapError } from "./errors"
 
@@ -26,6 +37,9 @@ export async function listLeases(
     tenantId?: string
   } = {}
 ): Promise<Lease[]> {
+  if (isSupabaseConfigured()) {
+    return listLeasesSupabase(ownerId, options)
+  }
   const store = await readStore()
   return store.leases.filter((l) => {
     if (l.owner_id !== ownerId) return false
@@ -40,6 +54,9 @@ export async function getLease(
   ownerId: string,
   id: string
 ): Promise<Lease | null> {
+  if (isSupabaseConfigured()) {
+    return getLeaseSupabase(ownerId, id)
+  }
   const store = await readStore()
   const lease = store.leases.find((l) => l.id === id && l.owner_id === ownerId)
   return lease ?? null
@@ -49,6 +66,9 @@ export async function createLease(
   ownerId: string,
   data: NewLease
 ): Promise<Lease> {
+  if (isSupabaseConfigured()) {
+    return createLeaseSupabase(ownerId, data)
+  }
   return mutateStore((current) => {
     // 1. Verify property belongs to the same owner
     const property = current.properties.find(
@@ -122,6 +142,9 @@ export async function updateLease(
   id: string,
   data: Partial<NewLease>
 ): Promise<Lease> {
+  if (isSupabaseConfigured()) {
+    return updateLeaseSupabase(ownerId, id, data)
+  }
   return mutateStore((current) => {
     const index = current.leases.findIndex(
       (l) => l.id === id && l.owner_id === ownerId
@@ -199,6 +222,9 @@ export async function deleteLease(
   ownerId: string,
   id: string
 ): Promise<void> {
+  if (isSupabaseConfigured()) {
+    return deleteLeaseSupabase(ownerId, id)
+  }
   return mutateStore((current) => {
     const lease = current.leases.find(
       (l) => l.id === id && l.owner_id === ownerId
@@ -237,6 +263,9 @@ export async function leaseHasPayments(
   ownerId: string,
   leaseId: string
 ): Promise<boolean> {
+  if (isSupabaseConfigured()) {
+    return leaseHasPaymentsSupabase(ownerId, leaseId)
+  }
   const store = await readStore()
   const leaseDueIds = new Set(
     store.rent_dues
@@ -259,6 +288,9 @@ export async function adjustLeaseRent(
   newCharges: number,
   effectivePeriod: string
 ): Promise<{ updatedDuesCount: number }> {
+  if (isSupabaseConfigured()) {
+    return adjustLeaseRentSupabase(ownerId, leaseId, newRent, newCharges, effectivePeriod)
+  }
   return mutateStore((current) => {
     const leaseIndex = current.leases.findIndex(
       (l) => l.id === leaseId && l.owner_id === ownerId
@@ -324,6 +356,9 @@ export async function terminateLease(
   leaseId: string,
   endDate: string
 ): Promise<Lease> {
+  if (isSupabaseConfigured()) {
+    return terminateLeaseSupabase(ownerId, leaseId, endDate)
+  }
   return mutateStore((current) => {
     const leaseIndex = current.leases.findIndex(
       (l) => l.id === leaseId && l.owner_id === ownerId
@@ -372,4 +407,3 @@ export async function terminateLease(
     }
   })
 }
-

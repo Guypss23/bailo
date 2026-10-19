@@ -209,11 +209,11 @@ export function AppSidebar({ userName, userEmail }: AppSidebarProps) {
           })}
         </nav>
 
-        {/* Local Security Status Badge */}
+        {/* Supabase Cloud Status Badge */}
         <div className="hidden lg:block px-2 pt-2">
-          <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-[11px] text-emerald-200/80 flex items-center gap-2">
+          <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-[11px] text-emerald-200/90 flex items-center gap-2 shadow-xs">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-            <span className="truncate">Stockage local .data/</span>
+            <span className="truncate font-medium">Base Supabase active</span>
           </div>
         </div>
       </div>

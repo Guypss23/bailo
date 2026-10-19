@@ -1,8 +1,17 @@
 import "server-only"
+import { isSupabaseConfigured } from "@/lib/supabase"
 import { readStore, mutateStore, currentISO } from "./local/store"
+import {
+  getProfileSupabase,
+  createProfileSupabase,
+  updateProfileSupabase,
+} from "./supabase/profiles"
 import type { Profile, NewProfile } from "./types"
 
 export async function getProfile(ownerId: string): Promise<Profile | null> {
+  if (isSupabaseConfigured()) {
+    return getProfileSupabase(ownerId)
+  }
   const store = await readStore()
   return store.profiles.find((p) => p.id === ownerId) ?? null
 }
@@ -11,6 +20,9 @@ export async function createProfile(
   ownerId: string,
   data: Omit<NewProfile, "id">
 ): Promise<Profile> {
+  if (isSupabaseConfigured()) {
+    return createProfileSupabase(ownerId, data)
+  }
   return mutateStore((current) => {
     const existing = current.profiles.find((p) => p.id === ownerId)
     if (existing) {
@@ -47,6 +59,9 @@ export async function updateProfile(
   ownerId: string,
   data: Partial<Omit<Profile, "id" | "created_at">>
 ): Promise<Profile> {
+  if (isSupabaseConfigured()) {
+    return updateProfileSupabase(ownerId, data)
+  }
   return mutateStore((current) => {
     const index = current.profiles.findIndex((p) => p.id === ownerId)
     if (index === -1) {

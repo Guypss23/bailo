@@ -1,20 +1,38 @@
 import "server-only"
+import { isSupabaseConfigured } from "@/lib/supabase"
 import { readStore, mutateStore, generateUUID, currentISO } from "./local/store"
 import { deleteAllOwnerFiles } from "./files"
+import {
+  getUserByIdSupabase,
+  getUserByEmailSupabase,
+  createUserSupabase,
+  updateUserPasswordSupabase,
+  exportUserDataSupabase,
+  deleteUserAccountSupabase,
+} from "./supabase/users"
 import type { User, NewUser } from "./types"
 
 export async function getUserById(id: string): Promise<User | null> {
+  if (isSupabaseConfigured()) {
+    return getUserByIdSupabase(id)
+  }
   const store = await readStore()
   return store.users.find((u) => u.id === id) ?? null
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
+  if (isSupabaseConfigured()) {
+    return getUserByEmailSupabase(email)
+  }
   const store = await readStore()
   const lower = email.trim().toLowerCase()
   return store.users.find((u) => u.email.toLowerCase() === lower) ?? null
 }
 
 export async function createUser(data: NewUser): Promise<User> {
+  if (isSupabaseConfigured()) {
+    return createUserSupabase(data)
+  }
   return mutateStore((current) => {
     const newUser: User = {
       id: generateUUID(),
@@ -37,6 +55,9 @@ export async function updateUserPassword(
   userId: string,
   passwordHash: string
 ): Promise<void> {
+  if (isSupabaseConfigured()) {
+    return updateUserPasswordSupabase(userId, passwordHash)
+  }
   await mutateStore((current) => {
     const userIndex = current.users.findIndex((u) => u.id === userId)
     if (userIndex === -1) {
@@ -63,6 +84,9 @@ export async function updateUserPassword(
  * Returns a complete JSON export of all data belonging to an owner.
  */
 export async function exportUserData(ownerId: string) {
+  if (isSupabaseConfigured()) {
+    return exportUserDataSupabase(ownerId)
+  }
   const store = await readStore()
   const user = store.users.find((u) => u.id === ownerId)
   return {
@@ -84,6 +108,9 @@ export async function exportUserData(ownerId: string) {
  * Permanently removes all data and files belonging to the owner.
  */
 export async function deleteUserAccount(ownerId: string): Promise<void> {
+  if (isSupabaseConfigured()) {
+    return deleteUserAccountSupabase(ownerId)
+  }
   await mutateStore((current) => {
     return {
       nextData: {
@@ -104,4 +131,3 @@ export async function deleteUserAccount(ownerId: string): Promise<void> {
   // Delete all uploaded private files for this owner
   await deleteAllOwnerFiles(ownerId).catch(() => {})
 }
-

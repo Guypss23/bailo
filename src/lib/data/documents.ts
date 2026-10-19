@@ -1,7 +1,14 @@
 import "server-only"
+import { isSupabaseConfigured } from "@/lib/supabase"
 import { readStore, mutateStore, generateUUID, currentISO } from "./local/store"
+import {
+  listDocumentsSupabase,
+  getDocumentSupabase,
+  getDocumentByRentDueSupabase,
+  createDocumentSupabase,
+  deleteDocumentSupabase,
+} from "./supabase/documents"
 import type { Document, NewDocument, DocumentKind } from "./types"
-import { NotFoundError } from "./errors"
 
 export async function listDocuments(
   ownerId: string,
@@ -11,6 +18,9 @@ export async function listDocuments(
     kind?: DocumentKind
   } = {}
 ): Promise<Document[]> {
+  if (isSupabaseConfigured()) {
+    return listDocumentsSupabase(ownerId, options)
+  }
   const store = await readStore()
   const documents = store.documents ?? []
   return documents
@@ -28,6 +38,9 @@ export async function getDocument(
   ownerId: string,
   id: string
 ): Promise<Document | null> {
+  if (isSupabaseConfigured()) {
+    return getDocumentSupabase(ownerId, id)
+  }
   const store = await readStore()
   const documents = store.documents ?? []
   const doc = documents.find((d) => d.id === id && d.owner_id === ownerId)
@@ -39,6 +52,9 @@ export async function getDocumentByRentDue(
   rentDueId: string,
   kind?: DocumentKind
 ): Promise<Document | null> {
+  if (isSupabaseConfigured()) {
+    return getDocumentByRentDueSupabase(ownerId, rentDueId, kind)
+  }
   const store = await readStore()
   const documents = store.documents ?? []
   const doc = documents.find(
@@ -54,6 +70,9 @@ export async function createDocument(
   ownerId: string,
   data: NewDocument
 ): Promise<Document> {
+  if (isSupabaseConfigured()) {
+    return createDocumentSupabase(ownerId, data)
+  }
   return mutateStore((current) => {
     const documents = current.documents ?? []
 
@@ -97,6 +116,9 @@ export async function deleteDocument(
   ownerId: string,
   id: string
 ): Promise<boolean> {
+  if (isSupabaseConfigured()) {
+    return deleteDocumentSupabase(ownerId, id)
+  }
   return mutateStore((current) => {
     const documents = current.documents ?? []
     const doc = documents.find((d) => d.id === id && d.owner_id === ownerId)
