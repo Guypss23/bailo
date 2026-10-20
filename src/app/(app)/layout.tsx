@@ -22,7 +22,11 @@ export default async function AppLayout({
     }
   } else {
     // Ensure rent dues are generated up to next month
-    await ensureRentDues(user.id)
+    try {
+      await ensureRentDues(user.id)
+    } catch (err) {
+      console.error("Erreur lors de la génération automatique des échéances :", err)
+    }
   }
 
   const userName = profile.full_name || user.email.split("@")[0]

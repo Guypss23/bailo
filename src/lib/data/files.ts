@@ -2,7 +2,9 @@ import "server-only"
 import path from "node:path"
 import fs from "node:fs/promises"
 
-const BASE_FILES_DIR = path.resolve(process.cwd(), ".data", "files")
+const BASE_FILES_DIR = process.env.VERCEL
+  ? path.resolve("/tmp", ".data", "files")
+  : path.resolve(process.cwd(), ".data", "files")
 
 /**
  * Validates and resolves the target file path inside the owner's isolated folder.

@@ -4,7 +4,9 @@ import path from "node:path"
 import crypto from "node:crypto"
 import type { DatabaseSchema } from "../types"
 
-const DATA_DIR = path.resolve(process.cwd(), ".data")
+const DATA_DIR = process.env.VERCEL
+  ? path.resolve("/tmp", ".data")
+  : path.resolve(process.cwd(), ".data")
 const DATA_FILE = path.join(DATA_DIR, "bailo.json")
 
 const INITIAL_DATA: DatabaseSchema = {

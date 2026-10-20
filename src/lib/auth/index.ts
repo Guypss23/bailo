@@ -171,6 +171,13 @@ export async function signUp(params: {
     }
   }
 
+  if (process.env.VERCEL && !isSupabaseConfigured()) {
+    return {
+      success: false,
+      error: "Supabase n'est pas configuré sur Vercel. Veuillez renseigner les variables d'environnement dans les paramètres de votre projet Vercel.",
+    }
+  }
+
   const existing = await getUserByEmail(normalizedEmail)
   if (existing) {
     return {
@@ -276,6 +283,13 @@ export async function signIn(params: {
         success: false,
         error: "Erreur de connexion.",
       }
+    }
+  }
+
+  if (process.env.VERCEL && !isSupabaseConfigured()) {
+    return {
+      success: false,
+      error: "Supabase n'est pas configuré sur Vercel. Veuillez renseigner les variables d'environnement dans les paramètres de votre projet Vercel.",
     }
   }
 
