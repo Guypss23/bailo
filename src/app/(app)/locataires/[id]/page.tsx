@@ -14,9 +14,11 @@ import {
   AlertTriangle,
   CheckCircle2,
   Plus,
+  Receipt,
 } from "lucide-react"
 import { TenantDetailActions } from "./tenant-detail-actions"
 import { CopyButton } from "./copy-button"
+import { TenantStatementTab } from "./tenant-statement-tab"
 import { StatusBadge } from "@/components/app/status-badge"
 import { Money } from "@/components/app/money"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -37,14 +39,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { requireUser } from "@/lib/auth"
 import {
   getTenant,
   listLeases,
   listProperties,
   listDueOverviews,
+  listPayments,
 } from "@/lib/data"
 import { computeTenantStats } from "@/lib/domain/tenant-stats"
+import { buildTenantStatement } from "@/lib/domain/statement"
 import { formatDate, formatPeriod, todayISO } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
@@ -86,16 +91,33 @@ export default async function TenantDetailPage({
     notFound()
   }
 
-  const [leases, properties, dueOverviews] = await Promise.all([
+  const [leases, properties, dueOverviews, allPayments] = await Promise.all([
     listLeases(user.id, { tenantId: id }),
     listProperties(user.id, { includeArchived: true }),
     listDueOverviews(user.id, { tenantId: id }),
+    listPayments(user.id),
   ])
 
   const propertiesMap = new Map(properties.map((p) => [p.id, p]))
 
+  // Filter payments associated with this tenant's dues
+  const dueIdsSet = new Set(dueOverviews.map((d) => d.id))
+  const tenantPayments = allPayments.filter((p) => dueIdsSet.has(p.rent_due_id))
+
+  const activeLease = leases.find((l) => l.status === "actif") || leases[0] || null
+  const activeProperty = activeLease ? propertiesMap.get(activeLease.property_id) || null : null
+
   // Pure stats calculations
   const stats = computeTenantStats(dueOverviews, todayISO())
+
+  // Build the chronological statement (Relevé de compte)
+  const statement = buildTenantStatement({
+    tenant,
+    lease: activeLease,
+    property: activeProperty,
+    dues: dueOverviews,
+    payments: tenantPayments,
+  })
 
   // Sort due overviews by period descending (most recent first)
   const sortedDues = [...dueOverviews].sort((a, b) =>
@@ -328,164 +350,191 @@ export default async function TenantDetailPage({
         </Card>
       </div>
 
-      {/* Baux associés */}
-      <Card className="border-border">
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <div>
-            <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-              <FileText className="w-4 h-4 text-primary" />
-              Baux associés
-            </CardTitle>
-            <CardDescription className="text-xs text-muted-foreground">
-              Contrats de location rattachés à ce locataire.
-            </CardDescription>
-          </div>
-          <Button asChild size="sm" variant="outline" className="text-xs gap-1.5">
-            <Link href={`/baux/nouveau?locataire=${tenant.id}`}>
-              <Plus className="w-3.5 h-3.5" />
-              Nouveau bail
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {sortedLeases.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-4 text-center">
-              Aucun bail n&apos;est actuellement associé à ce locataire.
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-border">
-                    <TableHead className="text-xs">Logement</TableHead>
-                    <TableHead className="text-xs">Période</TableHead>
-                    <TableHead className="text-xs text-right">Loyer CC</TableHead>
-                    <TableHead className="text-xs text-center">Statut</TableHead>
-                    <TableHead className="text-xs text-right">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedLeases.map((l) => {
-                    const prop = propertiesMap.get(l.property_id)
-                    const totalRent = l.rent_amount + l.charges_amount
+      {/* Onglets : Relevé de compte | Échéances mensuelles | Baux associés */}
+      <Tabs defaultValue="statement" className="space-y-4">
+        <TabsList className="bg-muted/60 p-1">
+          <TabsTrigger value="statement" className="text-xs font-semibold gap-1.5">
+            <FileText className="w-3.5 h-3.5 text-primary" />
+            <span>Relevé de compte</span>
+          </TabsTrigger>
+          <TabsTrigger value="dues" className="text-xs font-semibold gap-1.5">
+            <Receipt className="w-3.5 h-3.5 text-muted-foreground" />
+            <span>Échéances mensuelles ({dueOverviews.length})</span>
+          </TabsTrigger>
+          <TabsTrigger value="leases" className="text-xs font-semibold gap-1.5">
+            <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+            <span>Baux associés ({sortedLeases.length})</span>
+          </TabsTrigger>
+        </TabsList>
 
-                    return (
-                      <TableRow key={l.id} className="border-border text-xs">
-                        <TableCell className="font-semibold text-foreground">
-                          {prop ? (
-                            <Link
-                              href={`/biens/${prop.id}`}
-                              className="hover:text-primary transition-colors inline-flex items-center gap-1.5"
-                            >
-                              <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
-                              {prop.name}
-                            </Link>
-                          ) : (
-                            "—"
-                          )}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {formatDate(l.start_date)} →{" "}
-                          {l.end_date ? formatDate(l.end_date) : "En cours"}
-                        </TableCell>
-                        <TableCell className="text-right font-semibold text-foreground num">
-                          <Money amount={totalRent} currency={profile.currency} />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {l.status === "actif" && (
-                            <Badge className="bg-[#1E8A5A]/15 text-[#1E8A5A] border-transparent text-[11px] font-medium">
-                              Actif
-                            </Badge>
-                          )}
-                          {l.status === "termine" && (
-                            <Badge variant="outline" className="text-muted-foreground text-[11px]">
-                              Terminé
-                            </Badge>
-                          )}
-                          {l.status === "brouillon" && (
-                            <Badge variant="secondary" className="text-[11px]">
-                              Brouillon
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
-                            <Link href={`/baux/${l.id}`}>Consulter</Link>
-                          </Button>
-                        </TableCell>
+        {/* Onglet 1 : Relevé de compte chronologique (copie exacte du tableau PDF) */}
+        <TabsContent value="statement" className="mt-0">
+          <TenantStatementTab statement={statement} currency={profile.currency} />
+        </TabsContent>
+
+        {/* Onglet 2 : Échéances mois par mois */}
+        <TabsContent value="dues" className="mt-0">
+          <Card className="border-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold text-foreground">
+                Historique mois par mois
+              </CardTitle>
+              <CardDescription className="text-xs text-muted-foreground">
+                Détail des échéances mensuelles, montants appelés, règlements et soldes.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {sortedDues.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-6 text-center">
+                  Aucune échéance de loyer enregistrée pour ce locataire.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border bg-muted/20">
+                        <TableHead className="text-xs">Période</TableHead>
+                        <TableHead className="text-xs text-right">Dû</TableHead>
+                        <TableHead className="text-xs text-right">Payé</TableHead>
+                        <TableHead className="text-xs text-right">Reste</TableHead>
+                        <TableHead className="text-xs">Date de paiement</TableHead>
+                        <TableHead className="text-xs text-center">Statut</TableHead>
                       </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                    </TableHeader>
+                    <TableBody>
+                      {sortedDues.map((due) => (
+                        <TableRow key={due.id} className="border-border text-xs">
+                          <TableCell className="font-medium text-foreground capitalize">
+                            {formatPeriod(due.period)}
+                          </TableCell>
+                          <TableCell className="text-right num font-medium text-foreground">
+                            <Money amount={due.total_amount} currency={profile.currency} />
+                          </TableCell>
+                          <TableCell className="text-right num text-[#1E8A5A] font-semibold">
+                            <Money amount={due.paid_amount} currency={profile.currency} />
+                          </TableCell>
+                          <TableCell className="text-right num">
+                            {due.balance > 0 ? (
+                              <span className="font-bold text-destructive">
+                                <Money amount={due.balance} currency={profile.currency} />
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">0 {profile.currency}</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {due.last_paid_at ? formatDate(due.last_paid_at.slice(0, 10)) : "—"}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <StatusBadge status={due.status} />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* Historique mois par mois */}
-      <Card className="border-border">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold text-foreground">
-            Historique mois par mois
-          </CardTitle>
-          <CardDescription className="text-xs text-muted-foreground">
-            Détail des échéances mensuelles, montants appelés, règlements et soldes.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {sortedDues.length === 0 ? (
-            <p className="text-xs text-muted-foreground py-6 text-center">
-              Aucune échéance de loyer enregistrée pour ce locataire.
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-border bg-muted/20">
-                    <TableHead className="text-xs">Période</TableHead>
-                    <TableHead className="text-xs text-right">Dû</TableHead>
-                    <TableHead className="text-xs text-right">Payé</TableHead>
-                    <TableHead className="text-xs text-right">Reste</TableHead>
-                    <TableHead className="text-xs">Date de paiement</TableHead>
-                    <TableHead className="text-xs text-center">Statut</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedDues.map((due) => (
-                    <TableRow key={due.id} className="border-border text-xs">
-                      <TableCell className="font-medium text-foreground capitalize">
-                        {formatPeriod(due.period)}
-                      </TableCell>
-                      <TableCell className="text-right num font-medium text-foreground">
-                        <Money amount={due.total_amount} currency={profile.currency} />
-                      </TableCell>
-                      <TableCell className="text-right num text-[#1E8A5A] font-semibold">
-                        <Money amount={due.paid_amount} currency={profile.currency} />
-                      </TableCell>
-                      <TableCell className="text-right num">
-                        {due.balance > 0 ? (
-                          <span className="font-bold text-destructive">
-                            <Money amount={due.balance} currency={profile.currency} />
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">0 {profile.currency}</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {due.last_paid_at ? formatDate(due.last_paid_at.slice(0, 10)) : "—"}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <StatusBadge status={due.status} />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        {/* Onglet 3 : Baux associés */}
+        <TabsContent value="leases" className="mt-0">
+          <Card className="border-border">
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <div>
+                <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-primary" />
+                  Baux associés
+                </CardTitle>
+                <CardDescription className="text-xs text-muted-foreground">
+                  Contrats de location rattachés à ce locataire.
+                </CardDescription>
+              </div>
+              <Button asChild size="sm" variant="outline" className="text-xs gap-1.5">
+                <Link href={`/baux/nouveau?locataire=${tenant.id}`}>
+                  <Plus className="w-3.5 h-3.5" />
+                  Nouveau bail
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {sortedLeases.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-4 text-center">
+                  Aucun bail n&apos;est actuellement associé à ce locataire.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border">
+                        <TableHead className="text-xs">Logement</TableHead>
+                        <TableHead className="text-xs">Période</TableHead>
+                        <TableHead className="text-xs text-right">Loyer CC</TableHead>
+                        <TableHead className="text-xs text-center">Statut</TableHead>
+                        <TableHead className="text-xs text-right">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sortedLeases.map((l) => {
+                        const prop = propertiesMap.get(l.property_id)
+                        const totalRent = l.rent_amount + l.charges_amount
+
+                        return (
+                          <TableRow key={l.id} className="border-border text-xs">
+                            <TableCell className="font-semibold text-foreground">
+                              {prop ? (
+                                <Link
+                                  href={`/biens/${prop.id}`}
+                                  className="hover:text-primary transition-colors inline-flex items-center gap-1.5"
+                                >
+                                  <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+                                  {prop.name}
+                                </Link>
+                              ) : (
+                                "—"
+                              )}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {formatDate(l.start_date)} →{" "}
+                              {l.end_date ? formatDate(l.end_date) : "En cours"}
+                            </TableCell>
+                            <TableCell className="text-right font-semibold text-foreground num">
+                              <Money amount={totalRent} currency={profile.currency} />
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {l.status === "actif" && (
+                                <Badge className="bg-[#1E8A5A]/15 text-[#1E8A5A] border-transparent text-[11px] font-medium">
+                                  Actif
+                                </Badge>
+                              )}
+                              {l.status === "termine" && (
+                                <Badge variant="outline" className="text-muted-foreground text-[11px]">
+                                  Terminé
+                                </Badge>
+                              )}
+                              {l.status === "brouillon" && (
+                                <Badge variant="secondary" className="text-[11px]">
+                                  Brouillon
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
+                                <Link href={`/baux/${l.id}`}>Consulter</Link>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
