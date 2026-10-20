@@ -49,6 +49,7 @@ export function TenantDialog({
   const router = useRouter()
   const searchParams = useSearchParams()
   const isOnboarding = searchParams?.get("onboarding") === "1"
+  const uid = React.useId().replace(/[^a-zA-Z0-9_-]/g, "")
   const isDesktop = useMediaQuery("(min-width: 768px)")
   const [internalOpen, setInternalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -56,10 +57,10 @@ export function TenantDialog({
   const [globalError, setGlobalError] = useState<string | null>(null)
 
   React.useEffect(() => {
-    if (isOnboarding && !tenant && controlledOpen === undefined) {
+    if (isOnboarding && !tenant && controlledOpen === undefined && !trigger) {
       setInternalOpen(true)
     }
-  }, [isOnboarding, tenant, controlledOpen])
+  }, [isOnboarding, tenant, controlledOpen, trigger])
 
   const isControlled = controlledOpen !== undefined
   const isOpen = isControlled ? controlledOpen : internalOpen
@@ -119,8 +120,8 @@ export function TenantDialog({
     </Button>
   )
 
-  const FormContent = (
-    <form id="tenant-form" onSubmit={handleSubmit} className="space-y-4 py-2">
+  const FormFields = (
+    <div className="space-y-4">
       {globalError && (
         <div
           role="alert"
@@ -133,11 +134,11 @@ export function TenantDialog({
       {/* Prénom & Nom */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <Label htmlFor="tenant-firstname" className="text-xs font-medium text-foreground">
+          <Label htmlFor={`${uid}-firstname`} className="text-xs font-medium text-foreground">
             Prénom <span className="text-destructive">*</span>
           </Label>
           <Input
-            id="tenant-firstname"
+            id={`${uid}-firstname`}
             name="first_name"
             required
             defaultValue={tenant?.first_name || ""}
@@ -150,11 +151,11 @@ export function TenantDialog({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="tenant-lastname" className="text-xs font-medium text-foreground">
+          <Label htmlFor={`${uid}-lastname`} className="text-xs font-medium text-foreground">
             Nom de famille <span className="text-destructive">*</span>
           </Label>
           <Input
-            id="tenant-lastname"
+            id={`${uid}-lastname`}
             name="last_name"
             required
             defaultValue={tenant?.last_name || ""}
@@ -170,11 +171,11 @@ export function TenantDialog({
       {/* E-mail & Téléphone */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <Label htmlFor="tenant-email" className="text-xs font-medium text-foreground">
+          <Label htmlFor={`${uid}-email`} className="text-xs font-medium text-foreground">
             Adresse e-mail (optionnel)
           </Label>
           <Input
-            id="tenant-email"
+            id={`${uid}-email`}
             name="email"
             type="email"
             defaultValue={tenant?.email || ""}
@@ -187,11 +188,11 @@ export function TenantDialog({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="tenant-phone" className="text-xs font-medium text-foreground">
+          <Label htmlFor={`${uid}-phone`} className="text-xs font-medium text-foreground">
             Téléphone (optionnel)
           </Label>
           <Input
-            id="tenant-phone"
+            id={`${uid}-phone`}
             name="phone"
             type="tel"
             defaultValue={tenant?.phone || ""}
@@ -206,11 +207,11 @@ export function TenantDialog({
 
       {/* Notes privées */}
       <div className="space-y-1.5">
-        <Label htmlFor="tenant-notes" className="text-xs font-medium text-foreground">
+        <Label htmlFor={`${uid}-notes`} className="text-xs font-medium text-foreground">
           Notes privées (optionnel)
         </Label>
         <Textarea
-          id="tenant-notes"
+          id={`${uid}-notes`}
           name="notes"
           rows={3}
           defaultValue={tenant?.notes || ""}
@@ -221,7 +222,7 @@ export function TenantDialog({
           <p className="text-[11px] text-destructive">{errors.notes}</p>
         )}
       </div>
-    </form>
+    </div>
   )
 
   const TitleText = isEditing ? "Modifier le locataire" : "Ajouter un locataire"
@@ -241,35 +242,36 @@ export function TenantDialog({
             </DialogDescription>
           </DialogHeader>
 
-          {FormContent}
+          <form onSubmit={handleSubmit} className="space-y-4 py-2">
+            {FormFields}
 
-          <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t border-border/60">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isPending}
-              onClick={() => setIsOpen?.(false)}
-            >
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              form="tenant-form"
-              disabled={isPending}
-              className="font-medium"
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Enregistrement...
-                </>
-              ) : isEditing ? (
-                "Enregistrer"
-              ) : (
-                "Enregistrer le locataire"
-              )}
-            </Button>
-          </DialogFooter>
+            <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t border-border/60">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isPending}
+                onClick={() => setIsOpen?.(false)}
+              >
+                Annuler
+              </Button>
+              <Button
+                type="submit"
+                disabled={isPending}
+                className="font-medium"
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Enregistrement...
+                  </>
+                ) : isEditing ? (
+                  "Enregistrer"
+                ) : (
+                  "Enregistrer le locataire"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     )
@@ -286,36 +288,37 @@ export function TenantDialog({
           </SheetDescription>
         </SheetHeader>
 
-        {FormContent}
+        <form onSubmit={handleSubmit} className="space-y-4 py-2">
+          {FormFields}
 
-        <SheetFooter className="pt-3 border-t border-border/60 flex flex-col gap-2">
-          <Button
-            type="submit"
-            form="tenant-form"
-            disabled={isPending}
-            className="w-full font-medium"
-          >
-            {isPending ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Enregistrement...
-              </>
-            ) : isEditing ? (
-              "Enregistrer"
-            ) : (
-              "Enregistrer le locataire"
-            )}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isPending}
-            onClick={() => setIsOpen?.(false)}
-            className="w-full"
-          >
-            Annuler
-          </Button>
-        </SheetFooter>
+          <SheetFooter className="pt-3 border-t border-border/60 flex flex-col gap-2">
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="w-full font-medium"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Enregistrement...
+                </>
+              ) : isEditing ? (
+                "Enregistrer"
+              ) : (
+                "Enregistrer le locataire"
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPending}
+              onClick={() => setIsOpen?.(false)}
+              className="w-full"
+            >
+              Annuler
+            </Button>
+          </SheetFooter>
+        </form>
       </SheetContent>
     </Sheet>
   )

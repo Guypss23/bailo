@@ -59,7 +59,7 @@ export default async function BiensPage() {
       <PageHeader
         title="Biens"
         description="Gérez votre parc locatif : appartements, maisons, parkings et locaux."
-        actions={<PropertyDialog />}
+        actions={properties.length > 0 ? <PropertyDialog /> : null}
       />
 
       <BiensList items={items} currency={profile.currency} />

@@ -74,7 +74,7 @@ export default async function LocatairesPage() {
       <PageHeader
         title="Locataires"
         description="Coordonnées, état des paiements et baux associés à vos locataires."
-        actions={<TenantDialog />}
+        actions={tenants.length > 0 ? <TenantDialog /> : null}
       />
 
       <TenantsTable data={rows} currency={profile.currency} />

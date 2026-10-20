@@ -62,16 +62,17 @@ export function PropertyDialog({
   const searchParams = useSearchParams()
   const isOnboarding = searchParams?.get("onboarding") === "1"
   const isDesktop = useMediaQuery("(min-width: 768px)")
+  const uid = React.useId().replace(/[^a-zA-Z0-9_-]/g, "")
   const [internalOpen, setInternalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [globalError, setGlobalError] = useState<string | null>(null)
 
   React.useEffect(() => {
-    if (isOnboarding && !property && controlledOpen === undefined) {
+    if (isOnboarding && !property && controlledOpen === undefined && !trigger) {
       setInternalOpen(true)
     }
-  }, [isOnboarding, property, controlledOpen])
+  }, [isOnboarding, property, controlledOpen, trigger])
 
   const isControlled = controlledOpen !== undefined
   const isOpen = isControlled ? controlledOpen : internalOpen
@@ -136,8 +137,8 @@ export function PropertyDialog({
     </Button>
   )
 
-  const FormContent = (
-    <form id="property-form" onSubmit={handleSubmit} className="space-y-4 py-2">
+  const FormFields = (
+    <div className="space-y-4">
       {globalError && (
         <div
           role="alert"
@@ -150,11 +151,11 @@ export function PropertyDialog({
       {/* Nom & Type */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <Label htmlFor="prop-name" className="text-xs font-medium text-foreground">
+          <Label htmlFor={`${uid}-name`} className="text-xs font-medium text-foreground">
             Nom du bien <span className="text-destructive">*</span>
           </Label>
           <Input
-            id="prop-name"
+            id={`${uid}-name`}
             name="name"
             required
             defaultValue={property?.name || ""}
@@ -168,7 +169,7 @@ export function PropertyDialog({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="prop-type" className="text-xs font-medium text-foreground">
+          <Label htmlFor={`${uid}-type`} className="text-xs font-medium text-foreground">
             Type de bien <span className="text-destructive">*</span>
           </Label>
           <Select
@@ -178,7 +179,7 @@ export function PropertyDialog({
               if (val) setSelectedType(val)
             }}
           >
-            <SelectTrigger id="prop-type" className="h-9 text-sm">
+            <SelectTrigger id={`${uid}-type`} className="h-9 text-sm">
               <SelectValue placeholder="Choisir un type">
                 {(val: string | null) => (val && propertyTypeLabels[val as keyof typeof propertyTypeLabels]) || "Choisir un type"}
               </SelectValue>
@@ -199,11 +200,11 @@ export function PropertyDialog({
 
       {/* Adresse ligne 1 */}
       <div className="space-y-1.5">
-        <Label htmlFor="prop-addr1" className="text-xs font-medium text-foreground">
+        <Label htmlFor={`${uid}-addr1`} className="text-xs font-medium text-foreground">
           Adresse (ligne 1) <span className="text-destructive">*</span>
         </Label>
         <Input
-          id="prop-addr1"
+          id={`${uid}-addr1`}
           name="address_line1"
           required
           defaultValue={property?.address_line1 || ""}
@@ -218,11 +219,11 @@ export function PropertyDialog({
 
       {/* Adresse ligne 2 */}
       <div className="space-y-1.5">
-        <Label htmlFor="prop-addr2" className="text-xs font-medium text-foreground">
+        <Label htmlFor={`${uid}-addr2`} className="text-xs font-medium text-foreground">
           Complément d&apos;adresse (optionnel)
         </Label>
         <Input
-          id="prop-addr2"
+          id={`${uid}-addr2`}
           name="address_line2"
           defaultValue={property?.address_line2 || ""}
           placeholder="ex. Résidence Les Palmiers, Bâtiment B, Porte 4"
@@ -233,11 +234,11 @@ export function PropertyDialog({
       {/* Code postal & Ville */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <Label htmlFor="prop-postal" className="text-xs font-medium text-foreground">
+          <Label htmlFor={`${uid}-postal`} className="text-xs font-medium text-foreground">
             Code postal / B.P. (optionnel)
           </Label>
           <Input
-            id="prop-postal"
+            id={`${uid}-postal`}
             name="postal_code"
             defaultValue={property?.postal_code || ""}
             placeholder="ex. B.P. 1234"
@@ -246,11 +247,11 @@ export function PropertyDialog({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="prop-city" className="text-xs font-medium text-foreground">
+          <Label htmlFor={`${uid}-city`} className="text-xs font-medium text-foreground">
             Ville <span className="text-destructive">*</span>
           </Label>
           <Input
-            id="prop-city"
+            id={`${uid}-city`}
             name="city"
             required
             defaultValue={property?.city || "Libreville"}
@@ -267,11 +268,11 @@ export function PropertyDialog({
       {/* Pays & Surface */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <Label htmlFor="prop-country" className="text-xs font-medium text-foreground">
+          <Label htmlFor={`${uid}-country`} className="text-xs font-medium text-foreground">
             Pays
           </Label>
           <Input
-            id="prop-country"
+            id={`${uid}-country`}
             name="country"
             defaultValue={property?.country || "GA"}
             placeholder="GA"
@@ -283,11 +284,11 @@ export function PropertyDialog({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="prop-surface" className="text-xs font-medium text-foreground">
+          <Label htmlFor={`${uid}-surface`} className="text-xs font-medium text-foreground">
             Surface en m² (optionnel)
           </Label>
           <Input
-            id="prop-surface"
+            id={`${uid}-surface`}
             name="surface_m2"
             type="number"
             step="0.1"
@@ -304,11 +305,11 @@ export function PropertyDialog({
 
       {/* Notes */}
       <div className="space-y-1.5">
-        <Label htmlFor="prop-notes" className="text-xs font-medium text-foreground">
+        <Label htmlFor={`${uid}-notes`} className="text-xs font-medium text-foreground">
           Notes privées (optionnel)
         </Label>
         <Textarea
-          id="prop-notes"
+          id={`${uid}-notes`}
           name="notes"
           rows={3}
           defaultValue={property?.notes || ""}
@@ -316,7 +317,7 @@ export function PropertyDialog({
           className="text-sm resize-none"
         />
       </div>
-    </form>
+    </div>
   )
 
   const TitleText = isEditing ? "Modifier le bien" : "Ajouter un bien"
@@ -336,35 +337,36 @@ export function PropertyDialog({
             </DialogDescription>
           </DialogHeader>
 
-          {FormContent}
+          <form onSubmit={handleSubmit} className="space-y-4 py-2">
+            {FormFields}
 
-          <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t border-border/60">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isPending}
-              onClick={() => setIsOpen?.(false)}
-            >
-              Annuler
-            </Button>
-            <Button
-              type="submit"
-              form="property-form"
-              disabled={isPending}
-              className="font-medium"
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Enregistrement...
-                </>
-              ) : isEditing ? (
-                "Enregistrer"
-              ) : (
-                "Créer le bien"
-              )}
-            </Button>
-          </DialogFooter>
+            <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t border-border/60">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isPending}
+                onClick={() => setIsOpen?.(false)}
+              >
+                Annuler
+              </Button>
+              <Button
+                type="submit"
+                disabled={isPending}
+                className="font-medium"
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Enregistrement...
+                  </>
+                ) : isEditing ? (
+                  "Enregistrer"
+                ) : (
+                  "Créer le bien"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     )
@@ -381,36 +383,37 @@ export function PropertyDialog({
           </SheetDescription>
         </SheetHeader>
 
-        {FormContent}
+        <form onSubmit={handleSubmit} className="space-y-4 py-2">
+          {FormFields}
 
-        <SheetFooter className="pt-3 border-t border-border/60 flex flex-col gap-2">
-          <Button
-            type="submit"
-            form="property-form"
-            disabled={isPending}
-            className="w-full font-medium"
-          >
-            {isPending ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Enregistrement...
-              </>
-            ) : isEditing ? (
-              "Enregistrer"
-            ) : (
-              "Créer le bien"
-            )}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isPending}
-            onClick={() => setIsOpen?.(false)}
-            className="w-full"
-          >
-            Annuler
-          </Button>
-        </SheetFooter>
+          <SheetFooter className="pt-3 border-t border-border/60 flex flex-col gap-2">
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="w-full font-medium"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Enregistrement...
+                </>
+              ) : isEditing ? (
+                "Enregistrer"
+              ) : (
+                "Créer le bien"
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isPending}
+              onClick={() => setIsOpen?.(false)}
+              className="w-full"
+            >
+              Annuler
+            </Button>
+          </SheetFooter>
+        </form>
       </SheetContent>
     </Sheet>
   )
