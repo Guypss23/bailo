@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useActionState } from "react"
 import Link from "next/link"
-import { Loader2, AlertCircle, Sparkles } from "lucide-react"
+import { Loader2, AlertCircle, Sparkles, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -29,6 +29,7 @@ export function ConnexionForm({ next }: ConnexionFormProps) {
 
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
+  const [showPassword, setShowPassword] = React.useState(false)
 
   const handleFillDemo = () => {
     setEmail("demo@bailo.ga")
@@ -105,18 +106,33 @@ export function ConnexionForm({ next }: ConnexionFormProps) {
             <Label htmlFor="password" className="text-xs font-medium text-foreground">
               Mot de passe
             </Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              aria-invalid={Boolean(state?.fieldErrors?.password)}
-              className="h-9 text-sm"
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                aria-invalid={Boolean(state?.fieldErrors?.password)}
+                className="h-9 text-sm pr-9"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-xs"
+                aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
             {state?.fieldErrors?.password && (
               <p className="text-[11px] text-destructive">
                 {state.fieldErrors.password}

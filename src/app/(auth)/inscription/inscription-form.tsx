@@ -3,7 +3,7 @@
 import * as React from "react"
 import { useActionState, useState, useMemo } from "react"
 import Link from "next/link"
-import { Loader2, AlertCircle } from "lucide-react"
+import { Loader2, AlertCircle, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -24,6 +24,7 @@ export function InscriptionForm() {
     null
   )
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
 
   // Calculate password strength
   const strength = useMemo(() => {
@@ -137,18 +138,33 @@ export function InscriptionForm() {
                 </span>
               )}
             </div>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="8 caractères minimum"
-              aria-invalid={Boolean(state?.fieldErrors?.password)}
-              className="h-9 text-sm"
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="8 caractères minimum"
+                aria-invalid={Boolean(state?.fieldErrors?.password)}
+                className="h-9 text-sm pr-9"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-xs"
+                aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
 
             {/* Password strength indicator bars */}
             {password.length > 0 && (

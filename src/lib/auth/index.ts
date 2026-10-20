@@ -28,6 +28,19 @@ import {
   resetLoginAttempts,
 } from "./rate-limit"
 
+function getMissingVercelEnvMessage(): string {
+  const missing: string[] = []
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) missing.push("NEXT_PUBLIC_SUPABASE_URL")
+  if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) missing.push("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) missing.push("SUPABASE_SERVICE_ROLE_KEY")
+  if (!process.env.AUTH_SECRET) missing.push("AUTH_SECRET")
+
+  if (missing.length > 0) {
+    return `Variable(s) manquante(s) sur Vercel : ${missing.join(", ")}. Ajoutez-les dans Settings > Environment Variables puis cliquez sur Redeploy.`
+  }
+  return "Supabase n'est pas encore actif sur ce déploiement. Allez dans Deployments > ... > Redeploy sur Vercel pour appliquer vos variables."
+}
+
 export interface AuthenticatedUser {
   user: User
   profile: Profile
@@ -174,7 +187,7 @@ export async function signUp(params: {
   if (process.env.VERCEL && !isSupabaseConfigured()) {
     return {
       success: false,
-      error: "Supabase n'est pas configuré sur Vercel. Veuillez renseigner les variables d'environnement dans les paramètres de votre projet Vercel.",
+      error: getMissingVercelEnvMessage(),
     }
   }
 
@@ -289,7 +302,7 @@ export async function signIn(params: {
   if (process.env.VERCEL && !isSupabaseConfigured()) {
     return {
       success: false,
-      error: "Supabase n'est pas configuré sur Vercel. Veuillez renseigner les variables d'environnement dans les paramètres de votre projet Vercel.",
+      error: getMissingVercelEnvMessage(),
     }
   }
 
