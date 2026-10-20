@@ -2,15 +2,24 @@
 
 import { revalidatePath } from "next/cache"
 import { requireUser } from "@/lib/auth"
+import { z } from "zod"
 import {
   createTenant,
   updateTenant,
   archiveTenant,
   deleteTenant,
+  getTenant,
+  getLease,
+  listDueOverviews,
+  createRentDue,
+  createBulkPayments,
+  getProfile,
   HasLeasesError,
   NotFoundError,
 } from "@/lib/data"
 import { tenantSchema } from "@/lib/validations/tenant"
+import { simulateCascadePayment, type CascadeAllocation } from "@/lib/domain/cascade-payment"
+import { formatMoney } from "@/lib/format"
 
 export interface TenantActionState {
   ok: boolean
@@ -196,5 +205,139 @@ export async function deleteTenantAction(
     }
     console.error("Error deleting tenant:", error)
     return { ok: false, error: "Impossible de supprimer ce locataire." }
+  }
+}
+
+const cascadePaymentSchema = z.object({
+  tenant_id: z.string().uuid("Identifiant locataire invalide"),
+  lease_id: z.string().uuid("Identifiant bail invalide"),
+  amount: z.coerce.number().positive("Le montant doit être supérieur à 0"),
+  paid_at: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Format de date invalide (AAAA-MM-JJ)"),
+  method: z.enum([
+    "virement",
+    "prelevement",
+    "especes",
+    "cheque",
+    "mobile_money",
+    "carte",
+    "autre",
+  ]),
+  reference: z.string().nullable().optional(),
+  note: z.string().nullable().optional(),
+})
+
+export type CascadePaymentActionResult =
+  | {
+      success: true
+      count: number
+      totalAmount: number
+      allocations: CascadeAllocation[]
+    }
+  | {
+      success: false
+      error: string
+      fieldErrors?: Record<string, string>
+    }
+
+/**
+ * Enregistre un règlement global pour un locataire selon la règle d'apurement légal :
+ * solde en priorité les dettes les plus anciennes, cascade sur les suivantes,
+ * et génère les échéances futures si le versement comprend une avance.
+ */
+export async function recordTenantCascadePaymentAction(
+  raw: unknown
+): Promise<CascadePaymentActionResult> {
+  const { user } = await requireUser()
+  const parsed = cascadePaymentSchema.safeParse(raw)
+
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string> = {}
+    for (const issue of parsed.error.issues) {
+      const field = issue.path[0]?.toString() || "form"
+      fieldErrors[field] = issue.message
+    }
+    return {
+      success: false,
+      error: "Veuillez vérifier les informations de règlement.",
+      fieldErrors,
+    }
+  }
+
+  const { tenant_id, lease_id, amount, paid_at, method, reference, note } = parsed.data
+
+  try {
+    const [tenant, lease, profile] = await Promise.all([
+      getTenant(user.id, tenant_id),
+      getLease(user.id, lease_id),
+      getProfile(user.id),
+    ])
+
+    if (!tenant) {
+      return { success: false, error: "Locataire introuvable." }
+    }
+    if (!lease || lease.tenant_id !== tenant_id) {
+      return { success: false, error: "Bail introuvable ou non associé à ce locataire." }
+    }
+
+    // Récupérer toutes les échéances existantes du bail
+    const dues = await listDueOverviews(user.id, { leaseId: lease.id })
+
+    // Calculer l'apurement en cascade
+    const simulation = simulateCascadePayment(lease, dues, amount)
+
+    if (simulation.allocations.length === 0) {
+      return { success: false, error: "Aucun montant n'a pu être imputé." }
+    }
+
+    // Créer les échéances futures si avance
+    for (const newDue of simulation.newDuesToCreate) {
+      const created = await createRentDue(user.id, newDue)
+      const matchingAlloc = simulation.allocations.find(
+        (a) => a.period === newDue.period && a.isNewDue
+      )
+      if (matchingAlloc) {
+        matchingAlloc.rent_due_id = created.id
+      }
+    }
+
+    // Créer les paiements correspondants
+    const currency = profile?.currency ?? "XAF"
+    const itemsToPay = simulation.allocations.map((a) => ({
+      rent_due_id: a.rent_due_id!,
+      amount: a.amount,
+      method,
+      paid_at,
+      reference: reference?.trim() || null,
+      note:
+        note?.trim() ||
+        (simulation.allocations.length > 1
+          ? `Règlement global ventilé (${formatMoney(amount, currency)})`
+          : null),
+    }))
+
+    await createBulkPayments(user.id, itemsToPay)
+
+    // Revalider les vues financières et la fiche du locataire
+    revalidatePath("/loyers")
+    revalidatePath("/loyers/annuel")
+    revalidatePath("/tableau-de-bord")
+    revalidatePath("/baux")
+    revalidatePath(`/baux/${lease.id}`)
+    revalidatePath("/locataires")
+    revalidatePath(`/locataires/${tenant.id}`)
+    revalidatePath("/biens")
+
+    return {
+      success: true,
+      count: itemsToPay.length,
+      totalAmount: amount,
+      allocations: simulation.allocations,
+    }
+  } catch (error) {
+    console.error("Error in recordTenantCascadePaymentAction:", error)
+    return {
+      success: false,
+      error: "Une erreur est survenue lors de l'enregistrement de ce règlement.",
+    }
   }
 }

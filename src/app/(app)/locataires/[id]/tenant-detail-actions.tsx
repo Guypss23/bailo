@@ -11,6 +11,7 @@ import {
   Trash2,
   AlertTriangle,
   Loader2,
+  CreditCard,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -24,20 +25,32 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { TenantDialog } from "../tenant-dialog"
+import { TenantPaymentDialog } from "@/components/app/tenant-payment-dialog"
 import {
   archiveTenantAction,
   deleteTenantAction,
 } from "../actions"
-import type { Tenant } from "@/lib/data"
+import type { Tenant, Lease, Property, RentDueOverview } from "@/lib/data"
 
 interface TenantDetailActionsProps {
   tenant: Tenant
+  leases?: Lease[]
+  propertiesMap?: Record<string, Property>
+  dueOverviews?: RentDueOverview[]
+  currency?: string
 }
 
-export function TenantDetailActions({ tenant }: TenantDetailActionsProps) {
+export function TenantDetailActions({
+  tenant,
+  leases = [],
+  propertiesMap = {},
+  dueOverviews = [],
+  currency = "XAF",
+}: TenantDetailActionsProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
   const [hasLeasesError, setHasLeasesError] = useState(false)
 
   const isArchived = Boolean(tenant.archived_at)
@@ -92,6 +105,18 @@ export function TenantDetailActions({ tenant }: TenantDetailActionsProps) {
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
+        {/* Cascade Payment Dialog */}
+        {leases.length > 0 && !isArchived && (
+          <Button
+            size="sm"
+            onClick={() => setPaymentDialogOpen(true)}
+            className="gap-1.5 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs"
+          >
+            <CreditCard className="w-3.5 h-3.5" />
+            Encaisser un règlement
+          </Button>
+        )}
+
         {/* Edit Dialog */}
         <TenantDialog
           tenant={tenant}
@@ -220,6 +245,19 @@ export function TenantDetailActions({ tenant }: TenantDetailActionsProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Global Cascade Payment Dialog */}
+      {leases.length > 0 && (
+        <TenantPaymentDialog
+          open={paymentDialogOpen}
+          onOpenChange={setPaymentDialogOpen}
+          tenant={tenant}
+          leases={leases}
+          propertiesMap={propertiesMap}
+          dueOverviews={dueOverviews}
+          currency={currency}
+        />
+      )}
     </>
   )
 }

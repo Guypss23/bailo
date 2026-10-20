@@ -153,8 +153,14 @@ export default async function TenantDetailPage({
           </div>
         </div>
 
-        {/* Action Buttons: Modifier, Archiver, Supprimer */}
-        <TenantDetailActions tenant={tenant} />
+        {/* Action Buttons: Encaisser, Modifier, Archiver, Supprimer */}
+        <TenantDetailActions
+          tenant={tenant}
+          leases={leases}
+          propertiesMap={Object.fromEntries(propertiesMap.entries())}
+          dueOverviews={dueOverviews}
+          currency={profile.currency}
+        />
       </div>
 
       {/* Coordonnées avec boutons Copier */}
