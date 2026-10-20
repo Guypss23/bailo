@@ -63,7 +63,7 @@ export default async function TableauDeBordPage() {
               Bonjour {firstName}
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Bienvenue sur votre espace local de gestion des loyers en Franc CFA (XAF).
+              Bienvenue sur votre espace de gestion de baux et loyers.
             </p>
           </div>
         </div>
