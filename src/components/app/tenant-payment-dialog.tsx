@@ -42,7 +42,8 @@ import { Badge } from "@/components/ui/badge"
 export interface TenantPaymentDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  tenant: Tenant
+  tenant?: Tenant | null
+  tenants?: Tenant[]
   leases: Lease[]
   propertiesMap: Record<string, Property>
   dueOverviews: RentDueOverview[]
@@ -53,6 +54,7 @@ export function TenantPaymentDialog({
   open,
   onOpenChange,
   tenant,
+  tenants = [],
   leases,
   propertiesMap,
   dueOverviews,
@@ -60,12 +62,28 @@ export function TenantPaymentDialog({
 }: TenantPaymentDialogProps) {
   const [isPending, startTransition] = useTransition()
 
-  // Find active leases
-  const activeLeases = useMemo(
-    () => leases.filter((l) => l.status === "actif"),
-    [leases]
+  // Tenant selection if tenant not provided directly
+  const [selectedTenantId, setSelectedTenantId] = useState<string>(
+    tenant?.id || tenants[0]?.id || ""
   )
-  const defaultLease = activeLeases[0] || leases[0]
+
+  const currentTenant = useMemo(() => {
+    if (tenant) return tenant
+    return tenants.find((t) => t.id === selectedTenantId) || tenants[0] || null
+  }, [tenant, tenants, selectedTenantId])
+
+  // Leases for current tenant
+  const tenantLeases = useMemo(() => {
+    if (!currentTenant) return []
+    return leases.filter((l) => l.tenant_id === currentTenant.id)
+  }, [leases, currentTenant])
+
+  // Find active leases for this tenant
+  const activeLeases = useMemo(
+    () => tenantLeases.filter((l) => l.status === "actif"),
+    [tenantLeases]
+  )
+  const defaultLease = activeLeases[0] || tenantLeases[0]
 
   const [selectedLeaseId, setSelectedLeaseId] = useState<string>(
     defaultLease?.id || ""
@@ -78,17 +96,23 @@ export function TenantPaymentDialog({
   const [reference, setReference] = useState<string>("")
   const [note, setNote] = useState<string>("")
 
-  // Update selected lease if default changes or on open
+  // Update selected lease if tenant changes or on open
   React.useEffect(() => {
-    if (defaultLease && !selectedLeaseId) {
+    if (tenant?.id) {
+      setSelectedTenantId(tenant.id)
+    }
+  }, [tenant])
+
+  React.useEffect(() => {
+    if (defaultLease) {
       setSelectedLeaseId(defaultLease.id)
       setMethod(defaultLease.payment_method || "mobile_money")
     }
-  }, [defaultLease, selectedLeaseId, open])
+  }, [defaultLease, open])
 
   const selectedLease = useMemo(
-    () => leases.find((l) => l.id === selectedLeaseId) || defaultLease,
-    [leases, selectedLeaseId, defaultLease]
+    () => tenantLeases.find((l) => l.id === selectedLeaseId) || defaultLease,
+    [tenantLeases, selectedLeaseId, defaultLease]
   )
 
   const selectedProperty = selectedLease
@@ -107,7 +131,7 @@ export function TenantPaymentDialog({
   }, [leaseDues])
 
   const parsedAmount = Number(amountInput) || 0
-  const canSubmit = parsedAmount > 0 && Boolean(selectedLease) && !isPending
+  const canSubmit = parsedAmount > 0 && Boolean(selectedLease) && Boolean(currentTenant) && !isPending
 
   // Real-time cascade simulation
   const simulation = useMemo(() => {
@@ -117,11 +141,11 @@ export function TenantPaymentDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!canSubmit || !selectedLease) return
+    if (!canSubmit || !selectedLease || !currentTenant) return
 
     startTransition(async () => {
       const res = await recordTenantCascadePaymentAction({
-        tenant_id: tenant.id,
+        tenant_id: currentTenant.id,
         lease_id: selectedLease.id,
         amount: parsedAmount,
         paid_at: paidAt,
@@ -165,7 +189,7 @@ export function TenantPaymentDialog({
               <DialogDescription className="text-xs text-muted-foreground">
                 Apurement automatique en cascade pour{" "}
                 <strong className="text-foreground">
-                  {tenant.first_name} {tenant.last_name}
+                  {currentTenant ? `${currentTenant.first_name} ${currentTenant.last_name}` : "le locataire"}
                 </strong>
                 .
               </DialogDescription>
@@ -174,8 +198,41 @@ export function TenantPaymentDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+          {/* Sélection du locataire si plusieurs locataires possibles */}
+          {!tenant && tenants.length > 0 && (
+            <div className="space-y-1.5">
+              <Label htmlFor="global-tenant-select" className="text-xs font-medium text-foreground">
+                Locataire concerné *
+              </Label>
+              <Select
+                value={selectedTenantId}
+                onValueChange={(val) => {
+                  setSelectedTenantId(val)
+                  const l =
+                    leases.find((item) => item.tenant_id === val && item.status === "actif") ||
+                    leases.find((item) => item.tenant_id === val)
+                  if (l) {
+                    setSelectedLeaseId(l.id)
+                    if (l.payment_method) setMethod(l.payment_method)
+                  }
+                }}
+              >
+                <SelectTrigger id="global-tenant-select" className="h-9 text-xs">
+                  <SelectValue placeholder="Sélectionner un locataire" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tenants.map((t) => (
+                    <SelectItem key={t.id} value={t.id} className="text-xs">
+                      {t.first_name} {t.last_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* Sélection du bail si plusieurs */}
-          {leases.length > 1 ? (
+          {tenantLeases.length > 1 ? (
             <div className="space-y-1.5">
               <Label htmlFor="tenant-lease" className="text-xs font-medium text-foreground">
                 Bail / Logement concerné *
@@ -184,7 +241,7 @@ export function TenantPaymentDialog({
                 value={selectedLeaseId}
                 onValueChange={(val) => {
                   setSelectedLeaseId(val)
-                  const l = leases.find((item) => item.id === val)
+                  const l = tenantLeases.find((item) => item.id === val)
                   if (l?.payment_method) setMethod(l.payment_method)
                 }}
               >
@@ -192,7 +249,7 @@ export function TenantPaymentDialog({
                   <SelectValue placeholder="Sélectionner un bail" />
                 </SelectTrigger>
                 <SelectContent>
-                  {leases.map((l) => {
+                  {tenantLeases.map((l) => {
                     const prop = propertiesMap[l.property_id]
                     return (
                       <SelectItem key={l.id} value={l.id} className="text-xs">

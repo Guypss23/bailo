@@ -16,6 +16,7 @@ import {
   Loader2,
   ArrowRight,
   Receipt,
+  Sparkles,
 } from "lucide-react"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { formatMoney, formatPeriod, todayISO } from "@/lib/format"
@@ -25,6 +26,7 @@ import {
   updatePaymentAction,
   deletePaymentAction,
 } from "@/app/(app)/loyers/actions"
+import { recordTenantCascadePaymentAction } from "@/app/(app)/locataires/actions"
 import { useRouter, useSearchParams } from "next/navigation"
 import type { EnrichedDueOverview, Payment } from "@/lib/data/types"
 import {
@@ -94,6 +96,8 @@ export function PaymentSheet({
   const [method, setMethod] = useState<string>("virement")
   const [reference, setReference] = useState<string>("")
   const [note, setNote] = useState<string>("")
+  const [useCascade, setUseCascade] = useState<boolean>(true)
+  const [showAdvancePayment, setShowAdvancePayment] = useState<boolean>(false)
 
   // Editing state for existing payment
   const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null)
@@ -114,6 +118,8 @@ export function PaymentSheet({
       setReference("")
       setNote("")
       setEditingPaymentId(null)
+      setShowAdvancePayment(false)
+      setUseCascade(true)
     }
   }, [due, open])
 
@@ -122,13 +128,43 @@ export function PaymentSheet({
   const parsedAmount = Number(amountInput) || 0
   const isOverpaying = parsedAmount > due.balance
   const overpayDiff = parsedAmount - due.balance
-  const canSubmit = parsedAmount > 0 && !isOverpaying && !isPending
+  const canSubmit = parsedAmount > 0 && !isPending
 
   const handleRecordPayment = (e: React.FormEvent) => {
     e.preventDefault()
     if (!canSubmit) return
 
     startTransition(async () => {
+      // Si apurement légal actif ou dépassement de solde : ventilation cascade
+      if (useCascade || isOverpaying) {
+        const res = await recordTenantCascadePaymentAction({
+          tenant_id: due.tenant_id,
+          lease_id: due.lease_id,
+          amount: parsedAmount,
+          paid_at: paidAt,
+          method,
+          reference: reference.trim() || null,
+          note: note.trim() || null,
+        })
+
+        if (!res.success) {
+          toast.error(res.error)
+          return
+        }
+
+        toast.success(`Règlement de ${formatMoney(parsedAmount, currency)} enregistré`, {
+          description: `Ventilé automatiquement sur ${res.count} échéance(s) (apurement légal).`,
+          duration: 5000,
+        })
+
+        onOpenChange(false)
+        if (isOnboarding) {
+          router.push("/tableau-de-bord")
+        }
+        return
+      }
+
+      // Mode classique (sur cette seule échéance)
       const res = await recordPaymentAction({
         rent_due_id: due.id,
         amount: parsedAmount,
@@ -293,8 +329,8 @@ export function PaymentSheet({
               </Button>
             )}
 
-            {/* Saisie d'un nouveau paiement (si reste > 0) */}
-            {due.balance > 0 ? (
+            {/* Saisie d'un nouveau paiement (si reste > 0 ou si versement d'avance) */}
+            {due.balance > 0 || showAdvancePayment ? (
               <form onSubmit={handleRecordPayment} className="space-y-4">
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
@@ -302,14 +338,18 @@ export function PaymentSheet({
                       Montant encaissé *
                     </Label>
                     <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setAmountInput(String(due.balance))}
-                        className="text-[11px] font-medium text-primary hover:underline"
-                      >
-                        Solde total ({formatMoney(due.balance, currency)})
-                      </button>
-                      <span className="text-muted-foreground text-[10px]">·</span>
+                      {due.balance > 0 && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setAmountInput(String(due.balance))}
+                            className="text-[11px] font-medium text-primary hover:underline"
+                          >
+                            Solde total ({formatMoney(due.balance, currency)})
+                          </button>
+                          <span className="text-muted-foreground text-[10px]">·</span>
+                        </>
+                      )}
                       <button
                         type="button"
                         onClick={() => setAmountInput("")}
@@ -328,29 +368,52 @@ export function PaymentSheet({
                       required
                       value={amountInput}
                       onChange={(e) => setAmountInput(e.target.value)}
-                      placeholder="Ex: 450000"
-                      className={`h-10 text-base num ${
-                        isOverpaying ? "border-destructive focus-visible:ring-destructive" : ""
-                      }`}
+                      placeholder={due.balance > 0 ? String(due.balance) : "Ex: 70000"}
+                      className="h-10 text-base num"
                     />
                     <span className="absolute right-3 top-2.5 text-xs text-muted-foreground font-mono">
                       {currency}
                     </span>
                   </div>
 
-                  {/* Overpayment warning */}
+                  {/* Overpayment cascade info */}
                   {isOverpaying && (
-                    <div className="flex items-start gap-1.5 p-2 rounded-md bg-destructive/10 text-destructive text-xs mt-1.5 leading-relaxed">
-                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                      <span>
-                        Ce paiement dépasse le montant dû de{" "}
-                        <strong className="num font-semibold">
-                          {formatMoney(overpayDiff, currency)}
-                        </strong>
-                        . Veuillez ajuster le montant.
-                      </span>
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/[0.08] border border-primary/20 text-xs mt-1.5 leading-relaxed">
+                      <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      <div className="space-y-1">
+                        <p className="font-semibold text-primary">
+                          Ventilation en cascade automatique
+                        </p>
+                        <p className="text-muted-foreground">
+                          Ce versement dépasse le solde de ce mois de{" "}
+                          <strong className="num text-foreground font-semibold">
+                            {formatMoney(overpayDiff, currency)}
+                          </strong>
+                          . Le surplus sera automatiquement affecté aux échéances suivantes ou créé en avance.
+                        </p>
+                      </div>
                     </div>
                   )}
+                </div>
+
+                {/* Option Apurement légal en cascade */}
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/40 border border-border/60 text-xs">
+                  <div className="space-y-0.5 pr-2">
+                    <Label htmlFor="cascade-toggle" className="text-xs font-medium text-foreground cursor-pointer flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-primary" />
+                      Apurement légal en cascade
+                    </Label>
+                    <p className="text-[11px] text-muted-foreground">
+                      Solde en priorité les dettes les plus anciennes et cascade le surplus.
+                    </p>
+                  </div>
+                  <input
+                    id="cascade-toggle"
+                    type="checkbox"
+                    checked={useCascade}
+                    onChange={(e) => setUseCascade(e.target.checked)}
+                    className="h-4 w-4 rounded border-border text-primary focus:ring-primary accent-primary"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -431,18 +494,32 @@ export function PaymentSheet({
                   ) : (
                     <Check className="w-4 h-4 mr-1.5" />
                   )}
-                  Enregistrer l&apos;encaissement
+                  {isOverpaying
+                    ? `Enregistrer et ventiler (${formatMoney(parsedAmount, currency)})`
+                    : "Enregistrer l'encaissement"}
                 </Button>
               </form>
             ) : (
-              <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-center">
-                <Check className="w-6 h-6 text-emerald-600 dark:text-emerald-400 mx-auto mb-1.5" />
-                <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
-                  Loyer intégralement réglé
-                </p>
-                <p className="text-[11px] text-emerald-700 dark:text-emerald-400/80 mt-0.5">
-                  Cette échéance n&apos;a plus aucun solde à percevoir.
-                </p>
+              <div className="space-y-3">
+                <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-center">
+                  <Check className="w-6 h-6 text-emerald-600 dark:text-emerald-400 mx-auto mb-1.5" />
+                  <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                    Loyer intégralement réglé
+                  </p>
+                  <p className="text-[11px] text-emerald-700 dark:text-emerald-400/80 mt-0.5">
+                    Cette échéance n&apos;a plus aucun solde à percevoir.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAdvancePayment(true)}
+                  className="w-full text-xs font-medium gap-1.5 h-9"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  Enregistrer un versement d&apos;avance
+                </Button>
               </div>
             )}
 

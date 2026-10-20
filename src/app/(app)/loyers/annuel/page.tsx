@@ -59,6 +59,9 @@ export default async function SuiviAnnuelPage({
       currency={currency}
       properties={properties}
       activePropertyFilter={selectedProperty}
+      leases={leases}
+      tenants={tenants}
+      dueOverviews={dues}
     />
   )
 }

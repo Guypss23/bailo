@@ -18,6 +18,7 @@ import {
   FileSpreadsheet,
   FileText,
   ChevronDown,
+  CreditCard,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -38,8 +39,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { formatMoney } from "@/lib/format"
-import type { Property } from "@/lib/data/types"
+import type { Property, Lease, Tenant, RentDueOverview } from "@/lib/data/types"
 import type { AnnualGridData } from "@/lib/domain/annual-grid"
+import { TenantPaymentDialog } from "@/components/app/tenant-payment-dialog"
 
 export interface AnnuelHeaderProps {
   year: number
@@ -49,6 +51,9 @@ export interface AnnuelHeaderProps {
   activePropertyFilter: string
   viewMode: "montants" | "statuts"
   onViewModeChange: (mode: "montants" | "statuts") => void
+  leases?: Lease[]
+  tenants?: Tenant[]
+  dueOverviews?: RentDueOverview[]
 }
 
 export function AnnuelHeader({
@@ -59,9 +64,13 @@ export function AnnuelHeader({
   activePropertyFilter,
   viewMode,
   onViewModeChange,
+  leases = [],
+  tenants = [],
+  dueOverviews = [],
 }: AnnuelHeaderProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [paymentDialogOpen, setPaymentDialogOpen] = React.useState(false)
 
   const currentYear = new Date().getFullYear()
   const isCurrentYear = year === currentYear
@@ -210,6 +219,18 @@ export function AnnuelHeader({
               Vue mensuelle
             </Link>
           </Button>
+
+          {/* Bouton Encaisser un règlement */}
+          {tenants.length > 0 && (
+            <Button
+              size="sm"
+              onClick={() => setPaymentDialogOpen(true)}
+              className="h-8 text-xs font-semibold gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs"
+            >
+              <CreditCard className="w-3.5 h-3.5" />
+              <span>Encaisser un règlement</span>
+            </Button>
+          )}
 
           {/* Menu Exporter */}
           <DropdownMenu>
@@ -368,6 +389,19 @@ export function AnnuelHeader({
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialogue d'encaissement global avec cascade */}
+      {tenants.length > 0 && (
+        <TenantPaymentDialog
+          open={paymentDialogOpen}
+          onOpenChange={setPaymentDialogOpen}
+          tenants={tenants}
+          leases={leases}
+          propertiesMap={Object.fromEntries(properties.map((p) => [p.id, p]))}
+          dueOverviews={dueOverviews}
+          currency={currency}
+        />
+      )}
     </div>
   )
 }
