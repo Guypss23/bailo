@@ -64,6 +64,17 @@ export interface PaymentSheetProps {
   initialMode?: "record" | "view_payments"
 }
 
+function computeDefaultPaidAt(due: EnrichedDueOverview | null): string {
+  if (!due) return todayISO()
+  const today = todayISO()
+  // Si l'échéance concerne le mois en cours, pré-remplir avec la date du jour
+  if (today.slice(0, 7) === due.period.slice(0, 7)) {
+    return today
+  }
+  // Sinon (mois passé ou futur), pré-remplir avec le 1er jour du mois sélectionné ('YYYY-MM-01')
+  return due.period
+}
+
 export function PaymentSheet({
   open,
   onOpenChange,
@@ -79,7 +90,7 @@ export function PaymentSheet({
 
   // Form state
   const [amountInput, setAmountInput] = useState<string>("")
-  const [paidAt, setPaidAt] = useState<string>(todayISO())
+  const [paidAt, setPaidAt] = useState<string>(() => computeDefaultPaidAt(due))
   const [method, setMethod] = useState<string>("virement")
   const [reference, setReference] = useState<string>("")
   const [note, setNote] = useState<string>("")
@@ -98,7 +109,7 @@ export function PaymentSheet({
   useEffect(() => {
     if (due) {
       setAmountInput(due.balance > 0 ? String(due.balance) : "")
-      setPaidAt(todayISO())
+      setPaidAt(computeDefaultPaidAt(due))
       setMethod(due.lease?.payment_method ?? "virement")
       setReference("")
       setNote("")
