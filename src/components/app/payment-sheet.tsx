@@ -25,6 +25,7 @@ import {
   updatePaymentAction,
   deletePaymentAction,
 } from "@/app/(app)/loyers/actions"
+import { useRouter, useSearchParams } from "next/navigation"
 import type { EnrichedDueOverview, Payment } from "@/lib/data/types"
 import {
   Sheet,
@@ -70,6 +71,9 @@ export function PaymentSheet({
   currency,
   initialMode = "record",
 }: PaymentSheetProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const isOnboarding = searchParams?.get("onboarding") === "1"
   const isDesktop = useMediaQuery("(min-width: 768px)")
   const [isPending, startTransition] = useTransition()
 
@@ -145,6 +149,9 @@ export function PaymentSheet({
       })
 
       onOpenChange(false)
+      if (isOnboarding) {
+        router.push("/tableau-de-bord")
+      }
     })
   }
 

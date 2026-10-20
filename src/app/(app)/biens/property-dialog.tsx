@@ -34,6 +34,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { useRouter, useSearchParams } from "next/navigation"
 import { createPropertyAction, updatePropertyAction } from "./actions"
 import {
   propertyTypes,
@@ -57,11 +58,20 @@ export function PropertyDialog({
   onOpenChange: setControlledOpen,
   onSuccess,
 }: PropertyDialogProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const isOnboarding = searchParams?.get("onboarding") === "1"
   const isDesktop = useMediaQuery("(min-width: 768px)")
   const [internalOpen, setInternalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [globalError, setGlobalError] = useState<string | null>(null)
+
+  React.useEffect(() => {
+    if (isOnboarding && !property && controlledOpen === undefined) {
+      setInternalOpen(true)
+    }
+  }, [isOnboarding, property, controlledOpen])
 
   const isControlled = controlledOpen !== undefined
   const isOpen = isControlled ? controlledOpen : internalOpen
@@ -98,6 +108,9 @@ export function PropertyDialog({
         setIsOpen?.(false)
         if (res.propertyId) {
           onSuccess?.(res.propertyId)
+        }
+        if (isOnboarding && !isEditing) {
+          router.push("/tableau-de-bord")
         }
       } else {
         if (res.fieldErrors) {

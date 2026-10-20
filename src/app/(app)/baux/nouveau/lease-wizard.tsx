@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useState, useMemo, useTransition } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { toast } from "sonner"
 import {
@@ -81,6 +81,8 @@ export function LeaseWizard({
   currency,
 }: LeaseWizardProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const isOnboarding = searchParams?.get("onboarding") === "1"
   const [isPending, startTransition] = useTransition()
 
   // Wizard state: Step 1 = Bien, Step 2 = Locataire, Step 3 = Conditions
@@ -249,7 +251,11 @@ export function LeaseWizard({
         toast.success(
           `Bail créé · ${res.generatedDuesCount || 0} échéance(s) générée(s)`
         )
-        router.push(`/baux/${res.leaseId}`)
+        if (isOnboarding) {
+          router.push("/tableau-de-bord")
+        } else {
+          router.push(`/baux/${res.leaseId}`)
+        }
       } else {
         if (res.fieldErrors) {
           setErrors(res.fieldErrors)

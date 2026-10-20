@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useMemo, useTransition } from "react"
+import { useState, useMemo, useTransition, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { toast } from "sonner"
@@ -132,6 +132,20 @@ export function LoyersTable({
   const [sheetOpen, setSheetOpen] = useState(false)
   const [activeDue, setActiveDue] = useState<EnrichedDueOverview | null>(null)
   const [sheetMode, setSheetMode] = useState<"record" | "view_payments">("record")
+
+  const isOnboarding = searchParams?.get("onboarding") === "1"
+
+  // Auto-open payment sheet for first pending due if in onboarding flow
+  useEffect(() => {
+    if (isOnboarding && dues.length > 0 && !sheetOpen && !activeDue) {
+      const targetDue = dues.find((d) => d.status !== "paye") || dues[0]
+      if (targetDue) {
+        setActiveDue(targetDue)
+        setSheetMode("record")
+        setSheetOpen(true)
+      }
+    }
+  }, [isOnboarding, dues, sheetOpen, activeDue])
 
   // Manual reminder dialog state
   const [reminderDue, setReminderDue] = useState<EnrichedDueOverview | null>(null)

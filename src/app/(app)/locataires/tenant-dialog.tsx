@@ -27,6 +27,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { useRouter, useSearchParams } from "next/navigation"
 import { createTenantAction, updateTenantAction } from "./actions"
 import type { Tenant } from "@/lib/data"
 
@@ -45,11 +46,20 @@ export function TenantDialog({
   onOpenChange: setControlledOpen,
   onSuccess,
 }: TenantDialogProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const isOnboarding = searchParams?.get("onboarding") === "1"
   const isDesktop = useMediaQuery("(min-width: 768px)")
   const [internalOpen, setInternalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [globalError, setGlobalError] = useState<string | null>(null)
+
+  React.useEffect(() => {
+    if (isOnboarding && !tenant && controlledOpen === undefined) {
+      setInternalOpen(true)
+    }
+  }, [isOnboarding, tenant, controlledOpen])
 
   const isControlled = controlledOpen !== undefined
   const isOpen = isControlled ? controlledOpen : internalOpen
@@ -81,6 +91,9 @@ export function TenantDialog({
         setIsOpen?.(false)
         if (res.tenantId) {
           onSuccess?.(res.tenantId)
+        }
+        if (isOnboarding && !isEditing) {
+          router.push("/tableau-de-bord")
         }
       } else {
         if (res.fieldErrors) {
