@@ -5,6 +5,7 @@ import {
   listTenants,
   listProperties,
   listPayments,
+  generateRentDues,
 } from "@/lib/data"
 import { buildAnnualGrid } from "@/lib/domain/annual-grid"
 import { AnnuelView } from "./annuel-view"
@@ -30,6 +31,9 @@ export default async function SuiviAnnuelPage({
   const currentYear = new Date().getFullYear()
   const selectedYear = params.annee ? parseInt(params.annee, 10) || currentYear : currentYear
   const selectedProperty = params.bien || "all"
+
+  // Ensure all missing rent dues are generated up to current date
+  await generateRentDues(user.id)
 
   // Fetch all necessary data server-side
   const [dues, leases, tenants, properties, payments] = await Promise.all([

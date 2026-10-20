@@ -207,6 +207,7 @@ export function TenantPaymentDialog({
               <Select
                 value={selectedTenantId}
                 onValueChange={(val) => {
+                  if (!val) return
                   setSelectedTenantId(val)
                   const l =
                     leases.find((item) => item.tenant_id === val && item.status === "actif") ||
@@ -240,6 +241,7 @@ export function TenantPaymentDialog({
               <Select
                 value={selectedLeaseId}
                 onValueChange={(val) => {
+                  if (!val) return
                   setSelectedLeaseId(val)
                   const l = tenantLeases.find((item) => item.id === val)
                   if (l?.payment_method) setMethod(l.payment_method)
@@ -353,7 +355,12 @@ export function TenantPaymentDialog({
               <Label htmlFor="cascade-method" className="text-xs font-medium text-foreground">
                 Mode de règlement *
               </Label>
-              <Select value={method} onValueChange={setMethod}>
+              <Select
+                value={method}
+                onValueChange={(val) => {
+                  if (val) setMethod(val as any)
+                }}
+              >
                 <SelectTrigger id="cascade-method" className="h-9 text-xs">
                   <SelectValue />
                 </SelectTrigger>

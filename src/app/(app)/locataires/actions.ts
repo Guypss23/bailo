@@ -12,6 +12,7 @@ import {
   getLease,
   listDueOverviews,
   createRentDue,
+  generateRentDues,
   createBulkPayments,
   getProfile,
   HasLeasesError,
@@ -209,7 +210,7 @@ export async function deleteTenantAction(
 }
 
 const cascadePaymentSchema = z.object({
-  tenant_id: z.string().uuid("Identifiant locataire invalide"),
+  tenant_id: z.string().uuid("Identifiant locataire invalide").optional().nullable(),
   lease_id: z.string().uuid("Identifiant bail invalide"),
   amount: z.coerce.number().positive("Le montant doit être supérieur à 0"),
   paid_at: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Format de date invalide (AAAA-MM-JJ)"),
@@ -266,17 +267,23 @@ export async function recordTenantCascadePaymentAction(
   const { tenant_id, lease_id, amount, paid_at, method, reference, note } = parsed.data
 
   try {
-    const [tenant, lease, profile] = await Promise.all([
-      getTenant(user.id, tenant_id),
-      getLease(user.id, lease_id),
+    const lease = await getLease(user.id, lease_id)
+    if (!lease) {
+      return { success: false, error: "Bail introuvable." }
+    }
+
+    const resolvedTenantId = tenant_id || lease.tenant_id
+    const [tenant, profile] = await Promise.all([
+      getTenant(user.id, resolvedTenantId),
       getProfile(user.id),
+      generateRentDues(user.id),
     ])
 
     if (!tenant) {
       return { success: false, error: "Locataire introuvable." }
     }
-    if (!lease || lease.tenant_id !== tenant_id) {
-      return { success: false, error: "Bail introuvable ou non associé à ce locataire." }
+    if (lease.tenant_id !== tenant.id) {
+      return { success: false, error: "Ce bail n'est pas associé à ce locataire." }
     }
 
     // Récupérer toutes les échéances existantes du bail

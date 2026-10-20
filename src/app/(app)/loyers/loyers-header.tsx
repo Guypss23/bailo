@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   ArrowUpRight,
   CalendarRange,
+  CreditCard,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { GenerateMonthlyReceiptsDialog } from "@/components/app/generate-monthly-receipts-dialog"
@@ -31,7 +32,8 @@ import {
   addMonthsToPeriod,
   parseISODateParts,
 } from "@/lib/format"
-import type { EnrichedDueOverview } from "@/lib/data/types"
+import type { EnrichedDueOverview, Lease, Tenant, Property } from "@/lib/data/types"
+import { TenantPaymentDialog } from "@/components/app/tenant-payment-dialog"
 
 const MONTH_NAMES = [
   "Janvier",
@@ -53,6 +55,9 @@ export interface LoyersHeaderProps {
   dues: EnrichedDueOverview[]
   currency: string
   activeStatusFilter?: string
+  leases?: Lease[]
+  tenants?: Tenant[]
+  properties?: Property[]
 }
 
 export function LoyersHeader({
@@ -60,10 +65,14 @@ export function LoyersHeader({
   dues,
   currency,
   activeStatusFilter,
+  leases = [],
+  tenants = [],
+  properties = [],
 }: LoyersHeaderProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
   const todayPeriod = toPeriod(todayISO())
   const isCurrentMonth = currentPeriod === todayPeriod
 
@@ -212,6 +221,18 @@ export function LoyersHeader({
               Suivi annuel
             </Link>
           </Button>
+
+          {/* Règlement global / Apurement en cascade */}
+          {tenants.length > 0 && (
+            <Button
+              size="sm"
+              onClick={() => setPaymentDialogOpen(true)}
+              className="h-8 text-xs font-semibold gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs"
+            >
+              <CreditCard className="w-3.5 h-3.5" />
+              <span>Encaisser un règlement</span>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -292,6 +313,19 @@ export function LoyersHeader({
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialogue d'encaissement global avec cascade */}
+      {tenants.length > 0 && (
+        <TenantPaymentDialog
+          open={paymentDialogOpen}
+          onOpenChange={setPaymentDialogOpen}
+          tenants={tenants}
+          leases={leases}
+          propertiesMap={Object.fromEntries(properties.map((p) => [p.id, p]))}
+          dueOverviews={dues}
+          currency={currency}
+        />
+      )}
     </div>
   )
 }

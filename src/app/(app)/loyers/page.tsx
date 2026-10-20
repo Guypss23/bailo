@@ -1,5 +1,11 @@
 import { requireUser } from "@/lib/auth"
-import { listEnrichedDueOverviews, listProperties } from "@/lib/data"
+import {
+  listEnrichedDueOverviews,
+  listProperties,
+  listLeases,
+  listTenants,
+  generateRentDues,
+} from "@/lib/data"
 import { toPeriod, todayISO } from "@/lib/format"
 import { LoyersHeader } from "./loyers-header"
 import { LoyersTable } from "./loyers-table"
@@ -39,13 +45,16 @@ export default async function LoyersPage({ searchParams }: LoyersPageProps) {
   const currency = profile.currency || "XAF"
   const activeStatusFilter = params.statut || "tous"
 
-  // En un seul appel côté serveur : échéances enrichies des baux, locataires, biens et paiements
-  const enrichedDues = await listEnrichedDueOverviews(user.id, {
-    period: selectedPeriod,
-  })
+  // S'assurer que les échéances échues existent
+  await generateRentDues(user.id)
 
-  // Vérifier si l'utilisateur possède au moins un bien
-  const properties = await listProperties(user.id)
+  // En un seul appel parallèle côté serveur
+  const [enrichedDues, properties, leases, tenants] = await Promise.all([
+    listEnrichedDueOverviews(user.id, { period: selectedPeriod }),
+    listProperties(user.id),
+    listLeases(user.id),
+    listTenants(user.id),
+  ])
 
   return (
     <div className="space-y-6">
@@ -70,6 +79,9 @@ export default async function LoyersPage({ searchParams }: LoyersPageProps) {
             dues={enrichedDues}
             currency={currency}
             activeStatusFilter={activeStatusFilter}
+            leases={leases}
+            tenants={tenants}
+            properties={properties}
           />
 
           <LoyersTable

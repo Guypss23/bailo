@@ -194,7 +194,7 @@ export function buildAnnualGrid(options: {
         continue
       }
 
-      // If we have an existing due, enrich it for interaction
+      // If we have an existing due, enrich it for interaction, or synthesize if in lease
       let enrichedDue: EnrichedDueOverview | null = null
       if (rawDue) {
         const duePayments = paymentsByDue.get(rawDue.id) || []
@@ -204,6 +204,33 @@ export function buildAnnualGrid(options: {
           property,
           lease,
           payments: duePayments,
+        }
+      } else if (inLease) {
+        const dayStr = String(lease.due_day).padStart(2, "0")
+        const dueDate = `${year}-${monthStr}-${dayStr}`
+        const monthlyTotal = lease.rent_amount + lease.charges_amount
+        enrichedDue = {
+          id: `virtual-${lease.id}-${period}`,
+          owner_id: lease.owner_id,
+          lease_id: lease.id,
+          property_id: lease.property_id,
+          tenant_id: lease.tenant_id,
+          period,
+          due_date: dueDate,
+          rent_amount: lease.rent_amount,
+          charges_amount: lease.charges_amount,
+          total_amount: monthlyTotal,
+          paid_amount: 0,
+          balance: monthlyTotal,
+          last_paid_at: null,
+          status: "a_venir",
+          days_late: 0,
+          note: null,
+          created_at: new Date().toISOString(),
+          tenant,
+          property,
+          lease,
+          payments: [],
         }
       }
 

@@ -135,11 +135,11 @@ export function PaymentSheet({
     if (!canSubmit) return
 
     startTransition(async () => {
-      // Si apurement légal actif ou dépassement de solde : ventilation cascade
-      if (useCascade || isOverpaying) {
+      // Si apurement légal actif, dépassement de solde ou échéance virtuelle : ventilation cascade
+      if (useCascade || isOverpaying || due.id.startsWith("virtual-")) {
         const res = await recordTenantCascadePaymentAction({
-          tenant_id: due.tenant_id,
-          lease_id: due.lease_id,
+          tenant_id: due.tenant?.id || due.tenant_id || due.lease?.tenant_id || undefined,
+          lease_id: due.lease_id || due.lease?.id,
           amount: parsedAmount,
           paid_at: paidAt,
           method,
