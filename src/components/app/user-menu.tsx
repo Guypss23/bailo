@@ -13,7 +13,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Sun, Moon, Laptop, LogOut, Check, Loader2 } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Sun, Moon, Laptop, LogOut, Check, Loader2, ShieldCheck } from "lucide-react"
 import { signOutAction } from "@/app/(auth)/actions"
 import { cn } from "@/lib/utils"
 
@@ -21,13 +22,16 @@ interface UserMenuProps {
   collapsed?: boolean
   userName?: string
   userEmail?: string
+  isAdmin?: boolean
 }
 
 export function UserMenu({
   collapsed = false,
   userName = "Propriétaire Bailo",
   userEmail = "proprietaire@example.com",
+  isAdmin = false,
 }: UserMenuProps) {
+  const router = useRouter()
   const { theme, setTheme } = useTheme()
   const [isPending, startTransition] = useTransition()
 
@@ -103,6 +107,18 @@ export function UserMenu({
             {theme === "system" && <Check className="ml-auto h-3.5 w-3.5" />}
           </DropdownMenuItem>
         </DropdownMenuGroup>
+        {isAdmin && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => router.push("/admin")}
+              className="text-xs cursor-pointer text-emerald-700 dark:text-emerald-400 font-medium"
+            >
+              <ShieldCheck className="mr-2 h-4 w-4 text-emerald-600" />
+              <span>Zone Administration</span>
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="text-xs text-destructive focus:text-destructive cursor-pointer"

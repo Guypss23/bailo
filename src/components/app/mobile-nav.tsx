@@ -17,6 +17,7 @@ import {
   Laptop,
   LogOut,
   Loader2,
+  ShieldCheck,
 } from "lucide-react"
 import { signOutAction } from "@/app/(auth)/actions"
 import { useTheme } from "next-themes"
@@ -33,11 +34,13 @@ import { cn } from "@/lib/utils"
 interface MobileNavProps {
   userName?: string
   userEmail?: string
+  isAdmin?: boolean
 }
 
 export function MobileNav({
   userName = "Propriétaire Bailo",
   userEmail = "proprietaire@example.com",
+  isAdmin = false,
 }: MobileNavProps) {
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
@@ -198,6 +201,30 @@ export function MobileNav({
                 )
               })}
             </div>
+
+            {isAdmin && (
+              <>
+                <Separator className="bg-white/10" />
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-emerald-300/60 px-2 py-1">
+                    Supervision
+                  </p>
+                  <Link
+                    href="/admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                      pathname.startsWith("/admin")
+                        ? "bg-white/15 text-white font-semibold shadow-xs"
+                        : "text-emerald-300/70 hover:bg-white/5 hover:text-white"
+                    )}
+                  >
+                    <ShieldCheck className={cn("w-4 h-4", pathname.startsWith("/admin") ? "text-emerald-400" : "text-emerald-300/70")} />
+                    <span>Administration</span>
+                  </Link>
+                </div>
+              </>
+            )}
 
             <Separator className="bg-white/10" />
 

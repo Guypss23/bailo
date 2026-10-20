@@ -3,6 +3,7 @@ import { Suspense } from "react"
 import { AppSidebar } from "@/components/app/app-sidebar"
 import { MobileNav } from "@/components/app/mobile-nav"
 import { requireUser } from "@/lib/auth"
+import { isUserAdmin } from "@/lib/admin/auth"
 import { ensureRentDues } from "@/lib/rent-dues"
 import { runDailyTasks } from "@/lib/daily"
 import { todayISO } from "@/lib/format"
@@ -31,14 +32,15 @@ export default async function AppLayout({
 
   const userName = profile.full_name || user.email.split("@")[0]
   const userEmail = user.email
+  const isAdmin = await isUserAdmin(user.email)
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Suspense fallback={<div className="hidden md:block w-16 lg:w-[248px] fixed inset-y-0 left-0 bg-card border-r border-border" />}>
-        <AppSidebar userName={userName} userEmail={userEmail} />
+        <AppSidebar userName={userName} userEmail={userEmail} isAdmin={isAdmin} />
       </Suspense>
       <Suspense fallback={<div className="md:hidden h-14 bg-background border-b border-border" />}>
-        <MobileNav userName={userName} userEmail={userEmail} />
+        <MobileNav userName={userName} userEmail={userEmail} isAdmin={isAdmin} />
       </Suspense>
 
       {/* Main Content Area */}

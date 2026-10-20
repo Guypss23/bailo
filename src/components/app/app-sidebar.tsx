@@ -73,9 +73,10 @@ const SECONDARY_NAV_ITEMS = [
 interface AppSidebarProps {
   userName?: string
   userEmail?: string
+  isAdmin?: boolean
 }
 
-export function AppSidebar({ userName, userEmail }: AppSidebarProps) {
+export function AppSidebar({ userName, userEmail, isAdmin = false }: AppSidebarProps) {
   const pathname = usePathname()
 
   const isItemActive = (href: string, exact: boolean) => {
@@ -207,6 +208,64 @@ export function AppSidebar({ userName, userEmail }: AppSidebarProps) {
               </div>
             )
           })}
+
+          {/* Lien Administration réservé aux administrateurs autorisés */}
+          {isAdmin && (
+            <div key="/admin">
+              <div className="hidden lg:block">
+                <Link
+                  href="/admin"
+                  className={cn(
+                    "group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs lg:text-sm font-medium transition-all",
+                    isItemActive("/admin", false)
+                      ? "bg-white/15 text-white font-semibold shadow-xs"
+                      : "text-emerald-300/70 hover:text-white hover:bg-white/5"
+                  )}
+                >
+                  <ShieldCheck
+                    className={cn(
+                      "w-4 h-4 shrink-0 transition-colors",
+                      isItemActive("/admin", false)
+                        ? "text-emerald-400"
+                        : "text-emerald-300/70 group-hover:text-white"
+                    )}
+                  />
+                  <span className="hidden lg:inline-block truncate">
+                    Administration
+                  </span>
+                </Link>
+              </div>
+              <div className="block lg:hidden">
+                <Tooltip>
+                  <TooltipTrigger>
+                    <div className="flex justify-center">
+                      <Link
+                        href="/admin"
+                        className={cn(
+                          "group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs lg:text-sm font-medium transition-all",
+                          isItemActive("/admin", false)
+                            ? "bg-white/15 text-white font-semibold shadow-xs"
+                            : "text-emerald-300/70 hover:text-white hover:bg-white/5"
+                        )}
+                      >
+                        <ShieldCheck
+                          className={cn(
+                            "w-4 h-4 shrink-0 transition-colors",
+                            isItemActive("/admin", false)
+                              ? "text-emerald-400"
+                              : "text-emerald-300/70 group-hover:text-white"
+                          )}
+                        />
+                      </Link>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="bg-[#091510] text-white border-emerald-900/40">
+                    Administration
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </div>
+          )}
         </nav>
 
         {/* Supabase Cloud Status Badge */}
@@ -221,10 +280,10 @@ export function AppSidebar({ userName, userEmail }: AppSidebarProps) {
       {/* Footer / User Profile */}
       <div className="p-2 lg:p-3 border-t border-white/10 mt-auto">
         <div className="hidden lg:block">
-          <UserMenu collapsed={false} userName={userName} userEmail={userEmail} />
+          <UserMenu collapsed={false} userName={userName} userEmail={userEmail} isAdmin={isAdmin} />
         </div>
         <div className="block lg:hidden">
-          <UserMenu collapsed={true} userName={userName} userEmail={userEmail} />
+          <UserMenu collapsed={true} userName={userName} userEmail={userEmail} isAdmin={isAdmin} />
         </div>
       </div>
     </aside>
