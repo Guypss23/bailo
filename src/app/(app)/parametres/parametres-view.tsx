@@ -35,6 +35,7 @@ import { SignaturePad } from "@/components/app/signature-pad"
 import { ReceiptHeaderPreview } from "@/components/app/receipt-header-preview"
 import { AccountSettings } from "@/components/app/account-settings"
 import { DemoDataSection } from "./demo-data-section"
+import { PwaInstallPrompt } from "@/components/app/pwa-install-prompt"
 
 export interface ParametresViewProps {
   initialProfile: Profile
@@ -328,7 +329,8 @@ export function ParametresView({
 
         {/* 3. Préférences */}
         {activeTab === "preferences" && (
-          <Card className="border-border">
+          <>
+            <Card className="border-border">
             <CardHeader>
               <CardTitle className="text-base font-semibold text-foreground">
                 Préférences de gestion
@@ -565,6 +567,12 @@ export function ParametresView({
               </div>
             </CardContent>
           </Card>
+
+          {/* PWA Mobile Installation Card */}
+          <div className="mt-4">
+            <PwaInstallPrompt variant="card" />
+          </div>
+        </>
         )}
 
         {/* 4. Compte & Sécurité */}

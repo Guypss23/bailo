@@ -24,6 +24,7 @@ import {
   Car,
   Bed,
   Layers,
+  Printer,
 } from "lucide-react"
 import { PropertyDialog } from "@/app/(app)/biens/property-dialog"
 import { TenantDialog } from "@/app/(app)/locataires/tenant-dialog"
@@ -36,6 +37,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
 import {
   Select,
   SelectContent,
@@ -84,6 +92,7 @@ export function LeaseWizard({
   const searchParams = useSearchParams()
   const isOnboarding = searchParams?.get("onboarding") === "1"
   const [isPending, startTransition] = useTransition()
+  const [createdLeaseId, setCreatedLeaseId] = useState<string | null>(null)
 
   // Wizard state: Step 1 = Bien, Step 2 = Locataire, Step 3 = Conditions
   const [step, setStep] = useState<1 | 2 | 3>(
@@ -251,11 +260,7 @@ export function LeaseWizard({
         toast.success(
           `Bail créé · ${res.generatedDuesCount || 0} échéance(s) générée(s)`
         )
-        if (isOnboarding) {
-          router.push("/tableau-de-bord")
-        } else {
-          router.push(`/baux/${res.leaseId}`)
-        }
+        setCreatedLeaseId(res.leaseId)
       } else {
         if (res.fieldErrors) {
           setErrors(res.fieldErrors)
@@ -995,6 +1000,66 @@ export function LeaseWizard({
           </Card>
         </div>
       </div>
+
+      {/* Modal de Succès & Téléchargement Immédiat du Contrat de Bail Type */}
+      <Dialog
+        open={!!createdLeaseId}
+        onOpenChange={(open) => {
+          if (!open && createdLeaseId) {
+            router.push(`/baux/${createdLeaseId}`)
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-[#1F5C45] dark:text-[#6FCB9F] flex items-center justify-center mb-2 mx-auto">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+            <DialogTitle className="text-center text-lg font-bold">
+              Bail créé avec succès !
+            </DialogTitle>
+            <DialogDescription className="text-center text-xs text-muted-foreground pt-1">
+              Votre contrat de location et son calendrier d&apos;échéances ont été générés. Téléchargez dès maintenant le contrat officiel conforme prêt à signer.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2.5 pt-3">
+            <Button
+              asChild
+              className="w-full bg-[#1F5C45] hover:bg-[#184936] text-white font-medium py-5 gap-2 text-sm shadow-md"
+            >
+              <a
+                href={`/api/documents/lease/${createdLeaseId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Printer className="w-4 h-4" />
+                Télécharger le contrat de bail (PDF)
+              </a>
+            </Button>
+
+            <Button
+              variant="outline"
+              className="w-full text-xs"
+              onClick={() => {
+                if (createdLeaseId) router.push(`/baux/${createdLeaseId}`)
+              }}
+            >
+              Consulter la fiche du bail
+            </Button>
+
+            <Button
+              variant="ghost"
+              className="w-full text-xs text-muted-foreground"
+              onClick={() => {
+                router.push(isOnboarding ? "/tableau-de-bord" : "/baux")
+              }}
+            >
+              Retourner à la liste des baux
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Receipt,
   CalendarRange,
+  Wallet,
   Building2,
   Users,
   FileText,
@@ -39,6 +40,12 @@ const MAIN_NAV_ITEMS = [
     title: "Suivi annuel",
     href: "/loyers/annuel",
     icon: CalendarRange,
+    exact: false,
+  },
+  {
+    title: "Dépenses & Travaux",
+    href: "/depenses",
+    icon: Wallet,
     exact: false,
   },
   {

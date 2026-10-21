@@ -11,6 +11,7 @@ import {
   FileText,
   Building2,
   Users,
+  Wallet,
   Settings,
   Sun,
   Moon,
@@ -29,6 +30,7 @@ import {
 } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
+import { PwaInstallPrompt } from "./pwa-install-prompt"
 import { cn } from "@/lib/utils"
 
 interface MobileNavProps {
@@ -70,6 +72,7 @@ export function MobileNav({
   ]
 
   const MORE_ITEMS = [
+    { title: "Dépenses & Travaux", href: "/depenses", icon: Wallet },
     { title: "Biens", href: "/biens", icon: Building2 },
     { title: "Locataires", href: "/locataires", icon: Users },
     { title: "Paramètres", href: "/parametres", icon: Settings },
@@ -227,6 +230,11 @@ export function MobileNav({
             )}
 
             <Separator className="bg-white/10" />
+
+            {/* PWA Install Banner */}
+            <div className="px-1">
+              <PwaInstallPrompt variant="banner" />
+            </div>
 
             {/* Profile & Theme */}
             <div className="space-y-3 px-2">

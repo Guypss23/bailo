@@ -18,6 +18,7 @@ export * from "./demo"
 export * from "./files"
 export * from "./documents"
 export * from "./outbox"
+export * from "./expenses"
 
 // Diagnostic / Store helpers
 export { getDataFilePath, getStoreHealth } from "./local/store"

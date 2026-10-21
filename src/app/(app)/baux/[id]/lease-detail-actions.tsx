@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   DollarSign,
   Calendar,
+  Printer,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -139,6 +140,23 @@ export function LeaseDetailActions({
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
+        {/* Imprimer / Télécharger le contrat de bail (PDF) */}
+        <Button
+          variant="outline"
+          size="sm"
+          asChild
+          className="gap-1.5 text-xs font-medium text-[#1F5C45] dark:text-[#6FCB9F] hover:bg-[#1F5C45]/10 border-[#1F5C45]/30 shadow-xs"
+        >
+          <a
+            href={`/api/documents/lease/${lease.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Printer className="w-3.5 h-3.5" />
+            Contrat de bail (PDF)
+          </a>
+        </Button>
+
         {/* Modifier le loyer & charges (Dialog) */}
         {!isTerminated && (
           <Dialog open={adjustOpen} onOpenChange={setAdjustOpen}>

@@ -178,6 +178,31 @@ export interface OutboxMessage {
 
 export type NewOutboxMessage = Omit<OutboxMessage, 'id' | 'owner_id' | 'created_at'>
 
+export type ExpenseCategory =
+  | 'eau_electricite'
+  | 'vidange_assainissement'
+  | 'reparations_travaux'
+  | 'impots_taxes'
+  | 'entretien_gardiennage'
+  | 'gestion_assurance'
+  | 'autre'
+
+export interface Expense {
+  id: string
+  owner_id: string
+  property_id: string | null
+  category: ExpenseCategory
+  description: string
+  amount: number
+  date: string // 'YYYY-MM-DD'
+  payment_method: PaymentMethod
+  receipt_url: string | null
+  notes: string | null
+  created_at: string
+}
+
+export type NewExpense = Omit<Expense, 'id' | 'owner_id' | 'created_at'>
+
 export interface DatabaseSchema {
   users: User[]
   profiles: Profile[]
@@ -188,4 +213,5 @@ export interface DatabaseSchema {
   payments: Payment[]
   documents?: Document[]
   outbox?: OutboxMessage[]
+  expenses?: Expense[]
 }

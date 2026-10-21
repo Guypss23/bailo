@@ -19,6 +19,7 @@ const INITIAL_DATA: DatabaseSchema = {
   payments: [],
   documents: [],
   outbox: [],
+  expenses: [],
 }
 
 let writeQueue = Promise.resolve<any>(null)
@@ -71,6 +72,7 @@ export async function readStore(): Promise<DatabaseSchema> {
       payments: parsed.payments ?? [],
       documents: parsed.documents ?? [],
       outbox: parsed.outbox ?? [],
+      expenses: parsed.expenses ?? [],
     }
   } catch (error) {
     // If reading fails or file is corrupted, return initial structure
